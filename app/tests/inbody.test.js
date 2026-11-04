@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {extractInbody} from '../inbody.js';
+test('인바디 OCR 텍스트에서 주요 수치를 추출한다',()=>{const text='검사일시 2026.10.26. 06:51\n체중 (kg) 84.7\n골격근량 (kg) 38.4\n체지방량 (kg) 16.8\nBMI 25.3\n체지방률 (%) 19.8\n인바디점수 80/100점\n내장지방레벨 7\n기초대사량 1837 kcal';const x=extractInbody(text);assert.deepEqual(x,{date:'2026-10-26',weight:84.7,skeletalMuscle:38.4,bodyFatPct:19.8,bodyFatMass:16.8,bmi:25.3,score:80,visceralFatLevel:7,bmr:1837})});
+test('없는 값은 만들지 않는다',()=>{const x=extractInbody('체중 84.7');assert.equal(x.bodyFatPct,null);assert.equal(x.date,null)});

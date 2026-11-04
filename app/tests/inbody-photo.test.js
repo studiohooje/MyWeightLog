@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {regionBoxes,parseRegionResults,INBODY270_BOXES} from '../inbody-photo.js';
+test('인바디 270 영역 좌표를 화면 크기에 맞게 변환',()=>{assert.deepEqual(regionBoxes(1600,2255),INBODY270_BOXES);assert.deepEqual(regionBoxes(800,1127).weight,[268,372,58,27])});
+test('실제 샘플의 영역별 인식값을 검증해서 수치화',()=>{const x=parseRegionResults({date:'2026.10.26.0651',weight:'84.7',skeletalMuscle:'38.4',bodyFatMass:'16.8',bmi:'00\n25.3',bodyFatPct:'2503\n19.8',visceralFatLevel:'7',bmr:'1837'});assert.equal(x.date,'2026-10-26');assert.equal(x.weight,84.7);assert.equal(x.skeletalMuscle,38.4);assert.equal(x.bodyFatPct,19.8);assert.equal(x.bmi,25.3);assert.equal(x.score,null)});

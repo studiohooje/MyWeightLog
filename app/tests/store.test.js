@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {load,save,add,remove} from '../store.js';import {emptyDB,cleanBody} from '../domain.js';
+test('로컬 저장, 재읽기, 삭제',()=>{const data=new Map();globalThis.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};let db=emptyDB();db=add(db,'body',cleanBody({date:'2026-10-26',weight:84.7}));assert.equal(load().body.length,1);db=remove(db,'body',db.body[0].id);assert.equal(load().body.length,0);save(db)});

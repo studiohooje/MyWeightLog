@@ -1,0 +1,16 @@
+node_modules/
+dist/
+qa/
+.env
+.env.*
+!.env.example
+*.log
+*.apk
+*.aab
+*.jks
+*.keystore
+*service-account*.json
+*serviceAccount*.json
+.firebase/
+.DS_Store
+Thumbs.db

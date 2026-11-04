@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {cleanBody,cleanMeal,cleanWorkout,mealTotals,workoutTotals,estimate1RM,normalizeDB,emptyDB,bodyImportFile,importBody} from '../domain.js';
+test('인바디 측정값을 식별정보 없이 기록한다',()=>{const b=cleanBody({date:'2026-10-26',weight:'84.7',skeletalMuscle:'38.4',bodyFatPct:'19.8',bodyFatMass:'16.8',bmi:'25.3',score:'80',bmr:'1837',phone:'01000000000'});assert.equal(b.weight,84.7);assert.equal(b.skeletalMuscle,38.4);assert.equal(b.bodyFatPct,19.8);assert.equal(b.phone,undefined);assert.equal(b.visceralFatLevel,null);const file=bodyImportFile(b);assert.equal(importBody(file).source,'import')});
+test('빈 측정값은 0으로 바뀌지 않는다',()=>{const b=cleanBody({date:'2026-10-26',weight:'84.7',bodyFatPct:''});assert.equal(b.bodyFatPct,null)});
+test('식단 총합과 열량 기준 비율',()=>{const meals=[cleanMeal({date:'2026-10-26',name:'식사',calories:500,carbs:50,protein:25,fat:20}),cleanMeal({date:'2026-10-26',name:'간식',calories:100,carbs:10,protein:5,fat:0})];const t=mealTotals(meals);assert.equal(t.calories,600);assert.equal(t.carbs,60);assert.equal(t.protein,30);assert.equal(t.fat,20);assert.equal(t.percent.carbs+t.percent.protein+t.percent.fat,100)});
+test('운동 볼륨과 추정 1RM',()=>{const w=cleanWorkout({date:'2026-10-26',title:'등',exercises:[{name:'랫풀다운',part:'등',sets:[{weight:40,reps:12},{weight:50,reps:10}]}]});const t=workoutTotals(w);assert.equal(t.volume,980);assert.equal(t.reps,22);assert.equal(t.sets,2);assert.equal(t.best1RM,estimate1RM(50,10))});
+test('백업 데이터 형식 검증',()=>{assert.equal(normalizeDB(emptyDB()).schemaVersion,1);assert.throws(()=>normalizeDB({schemaVersion:99}),/지원하지/)});
+test('불가능한 날짜를 거부한다',()=>assert.throws(()=>cleanBody({date:'2026-02-31',weight:80}),/측정일/));
