@@ -1,3 +1,4 @@
+import {photoDatabaseName} from './storage-scope.js';
 import {normalizeDB,validDate} from './domain.js';
 import {STORAGE_KEY,RESTORE_PENDING_KEY,recoverValidatedDB} from './store.js';
 
@@ -18,7 +19,7 @@ function validateDB(raw){
 }
 function openPhotos(){return new Promise((resolve,reject)=>{
  if(!globalThis.indexedDB)return reject(Error('사진 저장소를 사용할 수 없습니다.'));
- const request=indexedDB.open('myweightlog.photos',2);
+ const request=indexedDB.open(photoDatabaseName(),2);
  request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains('progress'))db.createObjectStore('progress',{keyPath:'id'});if(!db.objectStoreNames.contains('recovery'))db.createObjectStore('recovery',{keyPath:'id'})};
  let blocked=false;request.onsuccess=()=>{if(blocked){request.result.close();return}resolve(request.result)};request.onerror=()=>reject(request.error);request.onblocked=()=>{blocked=true;reject(Error('다른 마웨로그 탭을 닫고 다시 시도해 주세요.'))};
 })}

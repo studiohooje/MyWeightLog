@@ -1,6 +1,8 @@
+import {scopedKey,onStorageScopeChange} from './storage-scope.js';
 import {emptyDB,normalizeDB} from './domain.js';
-export const STORAGE_KEY='myweightlog.v1';
-export const RESTORE_PENDING_KEY='myweightlog.restore.pending';
+export let STORAGE_KEY=scopedKey('myweightlog.v1');
+export let RESTORE_PENDING_KEY=scopedKey('myweightlog.restore.pending');
+onStorageScopeChange(()=>{STORAGE_KEY=scopedKey('myweightlog.v1');RESTORE_PENDING_KEY=scopedKey('myweightlog.restore.pending');status={blocked:false,reason:''};});
 let status={blocked:false,reason:''};
 export function getStorageStatus(){return {...status}}
 export function getRecoveryRaw(){return localStorage.getItem(STORAGE_KEY)}

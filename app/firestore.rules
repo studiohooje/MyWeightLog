@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) {
+      // Replace only after the intended owner signs in; default denies every account.
+      return request.auth != null && request.auth.uid == uid
+        && request.auth.uid in ['OWNER_UID_NOT_CONFIGURED'];
+    }
+    match /users/{uid}/records/{recordId} {
+      allow read: if owner(uid);
+      allow create: if owner(uid) && validRecord() && request.resource.data.revision == 1;
+      allow update: if owner(uid) && validRecord()
+        && request.resource.data.revision == resource.data.revision + 1;
+      // Deletions use versioned null payloads, never remove tombstones.
+      allow delete: if false;
+      function validRecord() {
+        return request.resource.data.keys().hasOnly(['revision','payload','updatedAt'])
+          && request.resource.data.revision is int
+          && (request.resource.data.payload == null || (request.resource.data.payload is string && request.resource.data.payload.size() < 800000))
+          && request.resource.data.updatedAt == request.time;
+      }
+    }
+  }
+}

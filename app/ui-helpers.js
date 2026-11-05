@@ -1,3 +1,4 @@
+import {photoDatabaseName} from './storage-scope.js';
 import {exercisePickerHTML,muscleMapHTML,machineIconHTML} from './exercise-ui.js';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const val = value => value ?? '';
@@ -71,7 +72,7 @@ export function workoutFormHTML({draft,meta={},routine=false,latest=()=>null,est
  ${routine?'':`<label class="field">운동 메모<input name="note" value="${esc(meta.note||'')}"></label>`}<button class="button">${routine?'루틴 저장':'운동 완료·저장'}</button></form>`;
 }
 
-function photoDB(){return new Promise((resolve,reject)=>{if(!globalThis.indexedDB)return reject(Error('이 기기에서는 사진 보관 기능을 사용할 수 없습니다.'));const req=indexedDB.open('myweightlog.photos',2);req.onupgradeneeded=()=>{for(const name of ['progress','recovery'])if(!req.result.objectStoreNames.contains(name))req.result.createObjectStore(name,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+function photoDB(){return new Promise((resolve,reject)=>{if(!globalThis.indexedDB)return reject(Error('이 기기에서는 사진 보관 기능을 사용할 수 없습니다.'));const req=indexedDB.open(photoDatabaseName(),2);req.onupgradeneeded=()=>{for(const name of ['progress','recovery'])if(!req.result.objectStoreNames.contains(name))req.result.createObjectStore(name,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 export async function saveProgressPhoto(file,date){if(!file?.type?.startsWith('image/'))throw Error('사진 파일을 선택해 주세요.');if(file.size>10*1024*1024)throw Error('사진은 10 MB 이하로 선택해 주세요.');const db=await photoDB();const item={id:globalThis.crypto?.randomUUID?.()||`${Date.now()}`,date,blob:file};await new Promise((resolve,reject)=>{const tx=db.transaction('progress','readwrite');tx.objectStore('progress').put(item);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();return item.id}
 export async function listProgressPhotos(){const db=await photoDB();const items=await new Promise((resolve,reject)=>{const req=db.transaction('progress').objectStore('progress').getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});db.close();return items.sort((a,b)=>a.date.localeCompare(b.date)).map(x=>({id:x.id,date:x.date,type:x.blob.type,url:URL.createObjectURL(x.blob)}))}
 export async function deleteProgressPhoto(id){const db=await photoDB();await new Promise((resolve,reject)=>{const tx=db.transaction('progress','readwrite');tx.objectStore('progress').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}
