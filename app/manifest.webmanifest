@@ -1,1 +1,1 @@
-{"name":"마웨로그 MyWeightLog","short_name":"마웨로그","description":"몸, 식단, 운동을 기록하는 습관","start_url":"./","scope":"./","display":"standalone","background_color":"#09090e","theme_color":"#09090e","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{"name":"마웨로그 MyWeightLog","short_name":"마웨로그","description":"몸, 식단, 운동을 기록하는 습관","start_url":"./","scope":"./","display":"standalone","background_color":"#07111e","theme_color":"#07111e","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
