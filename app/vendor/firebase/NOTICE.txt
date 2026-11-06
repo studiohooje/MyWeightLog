@@ -1,0 +1,8 @@
+Firebase JavaScript SDK 12.19.0
+Copyright Google LLC and Firebase contributors. Licensed under Apache License 2.0.
+Source: https://github.com/firebase/firebase-js-sdk
+Distribution source: https://www.gstatic.com/firebasejs/12.19.0/
+Files: firebase-app.js, firebase-auth.js, firebase-firestore.js
+Modification: imports of the same-version firebase-app.js were changed from the gstatic absolute URL to ./firebase-app.js so the exact SDK modules can load offline from app assets.
+Original license and third-party notices are retained within the distributed modules.
+License: https://www.apache.org/licenses/LICENSE-2.0

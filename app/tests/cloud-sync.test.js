@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {emptyDB,cleanBody,cleanMachine} from '../domain.js';
 import {cloudRecords,recordsToDB,planSync,stableJSON} from '../cloud-model.js';
 import {setStorageAccount,scopedKey,photoDatabaseName} from '../storage-scope.js';
-import {save,load,STORAGE_KEY,RESTORE_PENDING_KEY} from '../store.js';
+import {save,load,STORAGE_KEY,RESTORE_PENDING_KEY,getLoadedRaw} from '../store.js';
 import {writeSession,readSession} from '../session.js';
 const entry=(payload,revision=1)=>({payload,revision});
 test('independent records merge without losing either device',()=>{
@@ -58,4 +58,13 @@ test('guest and account data, drafts, recovery and photo stores stay isolated',(
  setStorageAccount('userB');assert.equal(load().body.length,0);assert.equal(readSession(),null);assert.match(scopedKey('myweightlog.draft.before-restore'),/userB$/);
  setStorageAccount('userA');assert.equal(load().body[0].id,'A');assert.equal(readSession().meta.title,'A');
  setStorageAccount('');assert.equal(load().body[0].id,'guest');assert.ok(readSession());
+});
+test('last loaded snapshot detects another tab editing before synchronization',()=>{
+ const memory=new Map();globalThis.localStorage={getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)};
+ setStorageAccount('snapshot-user');load();assert.equal(getLoadedRaw(),null);
+ save(emptyDB());const original=getLoadedRaw();assert.equal(original,memory.get(STORAGE_KEY));
+ memory.set(STORAGE_KEY,JSON.stringify({...emptyDB(),settings:{calorieGoal:1234}}));
+ assert.notEqual(getLoadedRaw(),localStorage.getItem(STORAGE_KEY));
+ load();assert.equal(getLoadedRaw(),localStorage.getItem(STORAGE_KEY));
+ setStorageAccount('');assert.equal(getLoadedRaw(),undefined);
 });
