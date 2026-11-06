@@ -10,3 +10,5 @@ The web build distributes these OCR components without modifying their upstream 
 The OCR core incorporates Tesseract and Leptonica. Upstream Leptonica notice is retained in `licenses/leptonica-BSD-2-Clause.txt`.
 
 The full dependency versions are recorded in package-lock.json. Build-only npm dependencies are fetched by npm and not copied wholesale to the web output.
+
+Capacitor Core 8.6.0 (MIT): vendor/capacitor/core.js; license: vendor/capacitor/LICENSE.

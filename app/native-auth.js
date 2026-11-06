@@ -1,3 +1,4 @@
+import {registerPlugin} from './vendor/capacitor/core.js';
 // The native bridge is injected by Capacitor. This module never loads a web OAuth UI.
 // Provider tokens are returned only to Firebase JS signInWithCredential; never persist or log them.
 export function isNative() {
@@ -9,10 +10,10 @@ export function nativeAuthAvailable() {
 }
 
 function plugin() {
-  if (!nativeAuthAvailable() || typeof globalThis.Capacitor.registerPlugin !== 'function') {
+  if (!nativeAuthAvailable()) {
     throw Error('Android 로그인 모듈이 포함된 최신 앱으로 업데이트해 주세요.');
   }
-  return globalThis.Capacitor.registerPlugin('FirebaseAuthentication');
+  return (globalThis.Capacitor.registerPlugin || registerPlugin)('FirebaseAuthentication');
 }
 
 export async function signInNativeGoogle() {
@@ -28,3 +29,4 @@ export async function signOutNativeGoogle() {
 
 export const nativeGoogleSignIn = signInNativeGoogle;
 export const nativeGoogleSignOut = signOutNativeGoogle;
+

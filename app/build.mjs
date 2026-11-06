@@ -18,3 +18,4 @@ console.log(`배포용 웹 앱 생성: ${out}`);
 await fs.cp(path.join(root,'licenses'),path.join(out,'licenses'),{recursive:true});
 await fs.copyFile(path.join(root,'THIRD_PARTY_NOTICES.md'),path.join(out,'THIRD_PARTY_NOTICES.md'));
 for(const f of ['tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt'])await fs.copyFile(path.join(root,'node_modules','tesseract.js','dist',f),path.join(out,'vendor',f));
+await fs.cp(path.join(root,'vendor','capacitor'),path.join(out,'vendor','capacitor'),{recursive:true});
