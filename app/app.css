@@ -45,3 +45,28 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--lav);outline-
 .atlas-block{padding:16px 12px;background:radial-gradient(ellipse at 50% 40%,#1d2231,#11131c 75%);border:1px solid #343442;border-radius:14px;overflow:hidden}.atlas-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}.atlas-heading span{font-size:11px;letter-spacing:.1em;color:#a9a2bc}.atlas-heading strong{font-size:12px;color:#d9d1e5}.atlas-block .anatomy-pair{display:flex;gap:16px;justify-content:center;align-items:flex-start;max-width:440px;margin:auto}.atlas-figure{flex:1;min-width:0;max-width:190px;margin:0;text-align:center}.atlas-block .anatomy-map{display:block;width:100%;max-width:100%;height:auto;max-height:370px;overflow:visible}.atlas-figure figcaption{font-size:12px;color:#b9b2c7;margin:8px 0}.atlas-block .target-legend{font-size:12px;line-height:1.7;justify-content:center;flex-wrap:wrap}.atlas-block .hint{font-size:12px;line-height:1.7}.atlas-block .primary-dot{background:#a84659}.atlas-block .secondary-dot{background:repeating-linear-gradient(-28deg,#dfadbd 0 1px,#644257 1px 4px)}.load-dot{display:inline-block;width:10px;height:10px;border-radius:3px;background:#695b90}.load-dot.high{background:#b89af0}.technical-atlas .muscle[role=button]:focus{stroke:#fff;stroke-width:2;outline:none}.atlas-load-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.atlas-load-list .record{display:block;padding:10px;border:1px solid #35313f;border-radius:8px}.atlas-load-list small{display:block;color:#aaa4b8}.atlas-switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}@media(max-width:420px){.atlas-block{padding:14px 8px}.atlas-block .anatomy-pair{gap:8px}.atlas-heading strong{font-size:11px}.atlas-block .target-legend{font-size:11px}}
 
 .sheet{overflow-anchor:none}
+
+/* Settings rhythm and breathing room around the app header. */
+.shell{padding-top:calc(30px + env(safe-area-inset-top,0px))}
+.header{min-height:54px;margin-bottom:30px}
+.settings-page .page-head{margin-bottom:22px}
+.settings-page>.card,.settings-page>.section.card{display:grid;gap:16px;padding:24px;margin-top:18px;min-width:0}
+.settings-page>.page-head+.card{margin-top:0}
+.settings-page>.card h3,.settings-page>.section.card h3{margin:0;line-height:1.35}
+.settings-page>.card>p,.settings-page>.section.card>p{margin:0;line-height:1.65;overflow-wrap:anywhere}
+.settings-page>.card .hint,.settings-page>.section.card .hint{line-height:1.6;overflow-wrap:anywhere}
+.settings-page>.card .form-grid{gap:14px}
+.settings-page>.card .actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;min-width:0}
+.settings-page>.card .actions>.button{min-width:0;min-height:44px;white-space:normal;line-height:1.4}
+.settings-page>.card>.button{min-height:44px;justify-self:start;white-space:normal;line-height:1.4}
+.settings-page>.card>.button+.button{margin-top:-6px}
+.settings-page>.card .record{min-height:40px}
+.settings-page>.card .record span:last-child{white-space:nowrap}
+.settings-page>.card>.text-button{justify-self:start;text-align:left}
+@media(max-width:650px){
+  .shell{padding-top:calc(24px + env(safe-area-inset-top,0px));padding-left:calc(18px + env(safe-area-inset-left,0px));padding-right:calc(18px + env(safe-area-inset-right,0px))}
+  .header{min-height:52px;margin-bottom:26px}
+  .settings-page>.card,.settings-page>.section.card{padding:20px 18px;gap:15px;margin-top:16px}
+  .settings-page>.card .actions{grid-template-columns:minmax(0,1fr)}
+  .settings-page>.card>.button{width:100%;justify-self:stretch}
+}
