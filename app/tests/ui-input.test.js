@@ -34,6 +34,7 @@ test('식단 수량 계산과 수정, 프로그램 운동 저장과 수정을 �
   assert.equal(db.meals[0].calories,250);
   await click({program:'full-body:0'});
   assert.match(root.innerHTML,/스쿼트/);
+  for(let i=0;i<3;i++)events.get('change')({target:{dataset:{set:'completed'},checked:true,closest:selector=>selector==='[data-ei]'?{dataset:{ei:String(i)}}:{dataset:{si:'0'},querySelector:()=>null}}});
   submit({_id:'workout-form',date:'2026-11-01',duration:'40',title:'전신 A',condition:'4',note:'확인'});
   db=JSON.parse(data.get('myweightlog.v1'));
   assert.equal(db.workouts.length,1);

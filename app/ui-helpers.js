@@ -7,8 +7,8 @@ const num = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 
 export function mealFormHTML({meal, date, recent=[], presets=[]}) {
   const m=meal||{};
-  const qty=num(m.servingQty)||1;
-  const base=k=>m[k]==null?'':Math.round((m[k]/qty)*10)/10;
+  const qty=num(m.servingQty)||(m.servingUnit==='g'?100:1);
+  const base=k=>m[k]==null?'':Math.round((m[k]/(m.servingUnit==='g'?qty/100:qty))*10)/10;
   const choices=[...presets.map((x,i)=>({key:`preset:${i}`,name:x.name})),...recent.map((x,i)=>({key:`recent:${i}`,name:x.name}))];
   return `<div class="gap"><p class="hint">한 번 먹는 양의 영양값을 입력하고 수량을 정하세요. 총 섭취량을 저장합니다.</p>
     ${choices.length?`<div class="chip-row" aria-label="음식 빠른 선택">${choices.slice(0,12).map(x=>`<button type="button" class="chip" data-food-choice="${x.key}">${esc(x.name)}</button>`).join('')}</div>`:''}
@@ -35,16 +35,18 @@ export function mealPreview(form, scaleNutrition) {
   const box=document.getElementById('meal-preview');
   if(!box)return;
   if(!Number.isFinite(quantity)||quantity<=0){box.textContent='수량은 0보다 커야 합니다.';return}
-  const scaled=scaleNutrition(Object.fromEntries(['calories','carbs','protein','fat'].map(k=>[k,data[k]===''?null:Number(data[k])])),quantity);
+  const scaled=scaleNutrition(Object.fromEntries(['calories','carbs','protein','fat'].map(k=>[k,data[k]===''?null:Number(data[k])])),data.servingUnit==='g'?quantity/100:quantity);
   box.textContent=`총 ${scaled.calories??'—'} kcal · 탄수화물 ${scaled.carbs??'—'} g · 단백질 ${scaled.protein??'—'} g · 지방 ${scaled.fat??'—'} g`;
 }
 
-export function workoutFormHTML({draft,meta={},routine=false,latest=()=>null,estimate=()=>0,catalog=[],barbellWeightKg=20,machines=[],favorites=[],recentExercises=[],selection={},checkin={},routines=[]}) {
+export function workoutFormHTML({draft,meta={},routine=false,latest=()=>null,estimate=()=>0,catalog=[],barbellWeightKg=20,machines=[],favorites=[],recentExercises=[],selection={},checkin={},routines=[],workoutTitles=[],gyms=[]}) {
  const modes=[['basic','기본'],['build-up','빌드업'],['start-heavy','고중량 시작'],['5x5','5×5'],['top-set','탑세트'],['back-off','백오프']];
  const rating=(name,label,value)=>`<label class="field">${label}<select name="${name}"><option value="">미입력</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${Number(value)===n?'selected':''}>${n}</option>`).join('')}</select></label>`;
  return `<form id="workout-form" class="gap"><div class="form-grid">
  ${routine?'':`<label class="field">날짜<input name="date" type="date" required value="${esc(meta.date||'')}"></label><label class="field">운동 시간 분<input name="duration" type="number" min="0" value="${esc(val(meta.duration))}"></label>`}
- <label class="field wide">${routine?'루틴 이름':'운동 제목'}<input name="title" required value="${esc(meta.title||'')}"></label>
+ ${routine?'':`<label class="field wide">오늘의 헬스장<select name="gymName"><option value="">선택하지 않음</option>${gyms.map(name=>`<option value="${esc(name)}" ${meta.gymName===name?'selected':''}>${esc(name)}</option>`).join('')}</select></label>`}
+ <label class="field wide">${routine?'루틴 이름':'운동날 이름 · 선택 사항'}<input name="title" ${routine?'required':''} value="${esc(meta.title||'')}" placeholder="예: 하체, Push Day, 3분할 - 등"></label>
+ ${routine?'':`<div class="wide title-presets" aria-label="저장한 운동날 이름">${workoutTitles.map((name,i)=>`<span class="title-preset"><button type="button" data-title-choice="${i}">${esc(name)}</button><button type="button" data-title-delete="${i}" aria-label="${esc(name)} 선택지 삭제">×</button></span>`).join('')}</div><p class="hint wide">이름을 비우면 첫 운동명과 나머지 종목 수를 표시합니다. 새 이름은 저장하면 다음에도 선택할 수 있습니다.</p>`}
  ${routine?'':`${rating('condition','오늘 컨디션 · 1 낮음 / 5 좋음',meta.condition)}${rating('sleep','수면 만족도 · 1 낮음 / 5 좋음',checkin.sleep)}${rating('energy','에너지 · 1 낮음 / 5 좋음',checkin.energy)}${rating('soreness','근육통 · 1 없음 / 5 심함',checkin.soreness)}<label class="field wide">통증·부상 우려<select name="pain"><option value="">미확인</option><option value="false" ${checkin.pain===false?'selected':''}>없음</option><option value="true" ${checkin.pain===true?'selected':''}>있음 · 증량 제안 제외</option></select></label>`}
  </div>${exercisePickerHTML({catalog,favorites,recentExercises,selection,routines})}
  ${routine?'':`<div class="plate-calc"><label class="field">바벨 총 중량 kg<input id="plate-total" type="number" min="${barbellWeightKg}" step="0.5" placeholder="예: 60"></label><button type="button" class="button secondary" id="plate-calc">한쪽 원판 계산</button><span id="plate-result" class="hint">바벨 ${barbellWeightKg} kg 기준</span></div>`}
@@ -55,7 +57,7 @@ export function workoutFormHTML({draft,meta={},routine=false,latest=()=>null,est
  <label class="field wide">종목 검색·직접 입력<input data-ex="name" list="exercise-catalog" value="${esc(ex.name)}" placeholder="예: 벤치프레스"></label>
  <label class="field">부위<select data-ex="part">${option(['가슴','등','하체','어깨','팔','복근','전신','유산소','기타'],ex.part||'가슴')}</select></label>
  <label class="field">종류<select data-ex="kind"><option value="strength" ${isCardio?'':'selected'}>근력</option><option value="cardio" ${isCardio?'selected':''}>유산소</option></select></label>
- <label class="field wide">머신·장비 프로필<select data-ex="machineId"><option value="">미지정 / 모름 / 프리웨이트</option>${machines.filter(m=>!m.exerciseId||m.exerciseId===ex.exerciseId||m.id===ex.machineId).map(m=>`<option value="${esc(m.id)}" ${m.id===ex.machineId?'selected':''}>${esc(m.name||[m.manufacturer,m.model].filter(Boolean).join(' ')||'사용자 머신')}</option>`).join('')}</select></label>
+ <label class="field wide">머신·장비 프로필<select data-ex="machineId"><option value="">미지정 / 모름 / 프리웨이트</option>${machines.filter(m=>!m.exerciseId||m.exerciseId===ex.exerciseId||m.id===ex.machineId).sort((a,b)=>Number(b.location===meta.gymName)-Number(a.location===meta.gymName)).map(m=>`<option value="${esc(m.id)}" ${m.id===ex.machineId?'selected':''}>${esc(m.location?`${m.location} · `:'')}${esc(m.name||[m.manufacturer,m.model].filter(Boolean).join(' ')||'사용자 머신')}</option>`).join('')}</select></label>
  <button type="button" class="text-button wide" data-new-machine="${ei}">＋ 머신 제조사·모델 등록</button>
  <label class="field wide">슈퍼세트 그룹<input data-ex="supersetGroup" value="${esc(ex.supersetGroup||'')}" placeholder="같은 그룹에 A 입력 · 선택사항"></label>
  ${isCardio?`<label class="field">운동 시간 분<input data-ex="durationMin" type="number" min="0" step="1" value="${esc(val(ex.durationMin))}"></label><label class="field">거리 km<input data-ex="distanceKm" type="number" min="0" step="0.01" value="${esc(val(ex.distanceKm))}"></label>`:''}</div>
@@ -66,13 +68,14 @@ export function workoutFormHTML({draft,meta={},routine=false,latest=()=>null,est
  <label class="field">단위<select data-set="unit" aria-label="중량 단위">${option(['kg','lb'],s.unit||'kg')}</select></label>
  <label class="field">횟수<div class="step-input"><button type="button" data-step-set="${ei}:${si}:reps:-1" aria-label="횟수 줄이기">−</button><input data-set="reps" type="number" inputmode="numeric" min="0" step="1" value="${esc(val(s.reps))}" aria-label="반복 횟수"><button type="button" data-step-set="${ei}:${si}:reps:1" aria-label="횟수 늘리기">＋</button></div></label>
  <label class="field">RPE<select data-set="rpe" aria-label="RPE"><option value="">미입력</option>${[5,6,7,7.5,8,8.5,9,9.5,10].map(n=>`<option value="${n}" ${Number(s.rpe)===n?'selected':''}>${n}</option>`).join('')}${s.rpe!=null&&![5,6,7,7.5,8,8.5,9,9.5,10].includes(Number(s.rpe))?`<option selected value="${esc(s.rpe)}">${esc(s.rpe)}</option>`:''}</select></label></div>
- <div class="set-card-footer"><select data-set="type" aria-label="세트 유형">${option(['본세트','워밍업','드롭세트','맨몸'],s.type||'본세트')}</select><button type="button" data-copy-set="${ei}:${si}">복사</button><button type="button" data-remove-set="${ei}:${si}" aria-label="${si+1}세트 삭제">삭제</button></div></div>`).join('')}
- <div class="chip-row">${modes.map(([key,label])=>`<button type="button" class="chip" data-assist="${ei}:${key}">${label}</button>`).join('')}</div><div class="actions"><button class="button secondary" type="button" data-add-set="${ei}">세트 추가</button><button class="button secondary" type="button" data-timer="90">휴식 90초</button></div>`}</section>`
+ <div class="set-card-footer"><select data-set="type" aria-label="세트 유형">${option(['본세트','워밍업','드롭세트','맨몸'],s.type||'본세트')}</select><button type="button" data-copy-set="${ei}:${si}">복사</button><button type="button" data-remove-set="${ei}:${si}" aria-label="${si+1}세트 삭제">삭제</button></div>${routine?'':`<label class="field set-time">실제 세트 완료 시각 · 수정 가능<input data-set="completedAt" type="datetime-local" value="${esc(s.completedAt||'')}"></label>`}</div>`).join('')}
+ <div class="chip-row">${modes.map(([key,label])=>`<button type="button" class="chip" data-assist="${ei}:${key}">${label}</button>`).join('')}</div><div class="actions"><button class="button secondary" type="button" data-add-set="${ei}">세트 추가</button></div>`}</section>`
  }).join('')}</div><button class="button secondary" type="button" id="add-ex">＋ 직접 종목 추가</button>
- ${routine?'':`<label class="field">운동 메모<input name="note" value="${esc(meta.note||'')}"></label>`}<button class="button">${routine?'루틴 저장':'운동 완료·저장'}</button></form>`;
+ ${routine?'':`<label class="field">운동 메모<input name="note" value="${esc(meta.note||'')}"></label>`}<button class="button">${routine?'루틴 저장':'완료한 세트 저장'}</button></form>`;
 }
 
 function photoDB(){return new Promise((resolve,reject)=>{if(!globalThis.indexedDB)return reject(Error('이 기기에서는 사진 보관 기능을 사용할 수 없습니다.'));const req=indexedDB.open(photoDatabaseName(),2);req.onupgradeneeded=()=>{for(const name of ['progress','recovery'])if(!req.result.objectStoreNames.contains(name))req.result.createObjectStore(name,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 export async function saveProgressPhoto(file,date){if(!file?.type?.startsWith('image/'))throw Error('사진 파일을 선택해 주세요.');if(file.size>10*1024*1024)throw Error('사진은 10 MB 이하로 선택해 주세요.');const db=await photoDB();const item={id:globalThis.crypto?.randomUUID?.()||`${Date.now()}`,date,blob:file};await new Promise((resolve,reject)=>{const tx=db.transaction('progress','readwrite');tx.objectStore('progress').put(item);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();return item.id}
 export async function listProgressPhotos(){const db=await photoDB();const items=await new Promise((resolve,reject)=>{const req=db.transaction('progress').objectStore('progress').getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});db.close();return items.sort((a,b)=>a.date.localeCompare(b.date)).map(x=>({id:x.id,date:x.date,type:x.blob.type,url:URL.createObjectURL(x.blob)}))}
 export async function deleteProgressPhoto(id){const db=await photoDB();await new Promise((resolve,reject)=>{const tx=db.transaction('progress','readwrite');tx.objectStore('progress').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}
+

@@ -9,7 +9,8 @@ export function scaleNutrition(perServing,servingQty=1){
 }
 export function toFoodPreset(meal){
  const q=number(meal?.servingQty)??1;if(q<=0)throw Error('섭취량을 확인해 주세요.');
- return {name:String(meal.name||'').trim(),servingUnit:String(meal.servingUnit||'회'),...Object.fromEntries(NUTRIENT_KEYS.map(k=>[k,meal[k]==null?null:round(meal[k]/q)]))};
+ const factor=meal.servingUnit==='g'?q/100:q;
+ return {name:String(meal.name||'').trim(),servingUnit:String(meal.servingUnit||'회'),...Object.fromEntries(NUTRIENT_KEYS.map(k=>[k,meal[k]==null?null:round(meal[k]/factor)]))};
 }
 export function recentFoods(meals,limit=12){
  const seen=new Set(),result=[];
