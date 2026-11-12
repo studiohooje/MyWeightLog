@@ -7,7 +7,9 @@ for(const f of (await fs.readdir(root)).filter(f=>f.endsWith('.js'))){
   for(const m of source.matchAll(/from ['"](\.\/[^'"]+)['"]/g))await fs.access(path.join(root,m[1]));
 }
 const sw=await fs.readFile(path.join(root,'sw.js'),'utf8');
-for(const m of sw.matchAll(/'\.\/([^']+)'/g))if(m[1])await fs.access(path.join(root,m[1]));
+for(const m of sw.matchAll(/'\.\/([^']+)'/g))if(m[1])await fs.access(path.join(root,m[1].split('?')[0]));
+const html=await fs.readFile(path.join(root,'index.html'),'utf8');
+for(const m of html.matchAll(/(?:src|href)="([^"#]+)"/g))if(!/^https?:/.test(m[1]))await fs.access(path.join(root,m[1].split('?')[0]));
 const manifest=JSON.parse(await fs.readFile(path.join(root,'manifest.webmanifest'),'utf8'));
 if(manifest.display!=='standalone')throw Error('PWA display invalid');
 console.log(`배포 파일 확인 완료: ${required.length}개 필수 파일, 모듈·오프라인 참조, PWA manifest`);
