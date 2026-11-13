@@ -22,6 +22,7 @@ import {muscleMapHTML,anatomySvg,MUSCLE_LABELS} from './exercise-ui.js';
 import {batchHTML,blankFood,batchMeals,batchSummary} from './meal-batch.js';
 import {renderHomeTimeline,mealGroups,workoutTitle} from './timeline-view.js';
 import {renderFoodPage} from './food-view.js';
+import {emptyQuickMeal,emptyQuickWorkout,quickTime,quickFoodCandidates,quickMealHTML,quickMealRecords,quickWorkoutHTML,quickWorkoutRecord} from './quick-entry.js';
 import {copyMeals,createRecipe,recipeMeals,weightTrend,exercisePRs,recommendWorkout} from './model-features.js';
 await initializeCloud();
 try{await recoverInterruptedRestore()}catch(e){console.error('복원 복구 필요',e)}
@@ -31,6 +32,7 @@ let machinePhoto='',batchCopy=false;let undoDraft=null,analysisMachine='all',ana
 let machineIndex=null,profileReturn='workout',machineEdit=null,customEdit=null;
 let bodyEditId=null,selection={tab:'recent',part:'전체',equipment:'전체'},batchRows=[],batchDate=today(),batchSlot='식사',batchTime=new Date().toTimeString().slice(0,5),restoreCandidate=null;
 let draftWarning='',savedDraft=null,backupBusy=false,renderedModal=null;
+let quickMeal=null,quickWorkout=null;
 try{savedDraft=readSession();if(savedDraft&&db.workouts.some(w=>w.sourceDraftId===savedDraft.id)){savedDraft=null;try{clearSession()}catch{}}timerEnds=savedDraft?.timerEnds||0}catch(e){draftWarning=e.message}
 const root=document.getElementById('app');
 function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -76,7 +78,9 @@ function modalHTML(){if(!modal)return '';const wrap=(title,content)=>`<div class
  if(modal==='body'){const b=db.body.find(x=>x.id===bodyEditId)||{};return wrap(bodyEditId?'몸 기록 수정':'체중·체성분 기록',`<form id="body-form" class="form-grid">${[['date','측정일','date'],['weight','체중 kg','number'],['bodyFatPct','체지방률 %','number'],['skeletalMuscle','골격근량 kg','number'],['waistCm','허리둘레 cm','number'],['bodyFatMass','체지방량 kg','number'],['bmi','BMI','number'],['score','인바디 점수','number'],['visceralFatLevel','내장지방 레벨','number'],['bmr','기초대사량 kcal','number'],['note','메모','text']].map(([k,label,type])=>`<label class="field">${label}<input name="${k}" type="${type}" ${type==='number'?'min="0" step="any"':''} ${k==='date'?'required':''} value="${esc(b[k]??(k==='date'?today():''))}"></label>`).join('')}<p class="hint wide waist-guide">허리둘레: 마지막 갈비뼈 아래와 골반뼈 위의 중간 높이에서 줄자를 수평으로 두고 자연스럽게 숨을 내쉰 뒤 측정하세요. 같은 위치에서 반복 측정하면 비교하기 쉽습니다.</p><p class="hint wide">출처: ${esc(b.source||'manual')}${b.updatedAt?` · 최근 수정 ${esc(b.updatedAt)}`:''}</p><button class="button wide">기록 저장</button></form>`)}
  if(modal==='machine')return wrap('머신 프로필',machineFormHTML(machineEdit||{},workDraft[machineIndex]?.exerciseId||''));
  if(modal==='custom-exercise')return wrap('나만의 종목',exerciseFormHTML(customEdit||{}));
- if(modal==='batch')return wrap('식사 기록',batchHTML(batchRows,batchDate,batchSlot,db.foods||[],db.recipes||[],{time:batchTime,gramOptions:db.settings.gramOptions||{}}));
+ if(modal==='quick-meal')return wrap('식사 기록',quickMealHTML(db,quickMeal));
+ if(modal==='quick-workout')return wrap('운동 기록',quickWorkoutHTML(db,quickWorkout,allExercises()));
+ if(modal==='batch')return wrap('식사 상세 입력',batchHTML(batchRows,batchDate,batchSlot,db.foods||[],db.recipes||[],{time:batchTime,gramOptions:db.settings.gramOptions||{}}));
  if(modal==='checkin')return wrap('오늘 상태',checkinHTML());
  if(modal==='meal'){
   const meal=db.meals.find(x=>x.id===mealEditId);
@@ -98,6 +102,41 @@ function render(){const oldSheet=document.querySelector?.('.sheet'),keep=rendere
 function download(name,data,type='application/json'){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function ocrFields(data){ocrDraft=data;document.getElementById('ocr-fields').innerHTML=`<div class="form-grid">${[['date','측정일','date'],['weight','체중 kg','number'],['skeletalMuscle','골격근량 kg','number'],['bodyFatPct','체지방률 %','number'],['bodyFatMass','체지방량 kg','number'],['bmi','BMI','number'],['score','인바디 점수','number'],['visceralFatLevel','내장지방 레벨','number'],['bmr','기초대사량 kcal','number']].map(([key,label,type])=>`<label class="field">${label}<input data-ocr-field="${key}" type="${type}" step="any" value="${esc(data[key]??(key==="date"?today():""))}"></label>`).join('')}<button class="button wide" id="ocr-save">원본과 확인한 수치 저장</button></div>`}
 async function readFile(input){const file=input?.files?.[0];if(!file)throw Error('파일을 선택해 주세요.');return file.text()}
+function quickFoodRow(item,qty){return {...item,servingQty:qty,servingUnit:item.servingUnit||'g'}}
+function quickMachineFor(exerciseId,gymName){return (db.machines||[]).find(m=>m.location===gymName&&m.exerciseId===exerciseId)}
+function quickPreviousSet(exerciseId,machineId){for(const w of recent(db.workouts))for(const e of w.exercises||[])if((e.exerciseId||e.name)===exerciseId&&(e.machineId||'')===(machineId||'')){const set=[...(e.sets||[])].reverse().find(s=>s.completed!==false);if(set)return set}return null}
+function quickClick(t){
+ if(modal==='quick-meal'){
+  const s=quickMeal;
+  if(t.dataset.qTab){s.tab=t.dataset.qTab;render();return true}
+  if(t.dataset.qFood){const item=quickFoodCandidates(db).find(x=>`${x.name.toLocaleLowerCase('ko')}|${x.servingUnit||'g'}`===t.dataset.qFood);if(!item)throw Error('음식을 찾지 못했습니다.');if(['calories','carbs','protein','fat'].some(k=>item[k]==null))throw Error('영양값이 일부 없는 음식입니다. 상세 입력에서 라벨 값을 확인해 주세요.');s.picked=structuredClone(item);s.editIndex=-1;s.qty=item.servingUnit==='g'?(db.settings.lastGrams?.[item.name]||100):1;s.gramOptions=db.settings.gramOptions?.[item.name]||[100,200,210,250,300];render();return true}
+  if(t.dataset.qRecipe){const recipe=(db.recipes||[]).find(x=>x.id===t.dataset.qRecipe);if(!recipe)return true;for(const meal of recipeMeals(recipe,s.date,'식사',1)){const q=meal.servingUnit==='g'?(db.settings.lastGrams?.[meal.name]||meal.servingQty):meal.servingQty,base=meal.servingUnit==='g'?meal.servingQty/100:meal.servingQty;s.rows.push(quickFoodRow({...meal,...Object.fromEntries(['calories','carbs','protein','fat'].map(k=>[k,meal[k]==null?null:meal[k]/base]))},q))}render();return true}
+  if(t.dataset.qGram){s.qty=Number(t.dataset.qGram);render();return true}
+  if(t.dataset.qEditFood!==undefined){s.editIndex=Number(t.dataset.qEditFood);s.picked=structuredClone(s.rows[s.editIndex]);s.qty=s.picked.servingQty;s.gramOptions=db.settings.gramOptions?.[s.picked.name]||[100,200,210,250,300];render();return true}
+  if(t.dataset.qRemoveFood!==undefined){s.rows.splice(Number(t.dataset.qRemoveFood),1);render();return true}
+  if(t.id==='q-close-picker'){s.picked=null;render();return true}
+  if(t.id==='q-confirm-food'){const qty=Number(document.getElementById('q-qty')?.value);if(!Number.isFinite(qty)||qty<=0)throw Error('먹은 양을 확인해 주세요.');const row=quickFoodRow(s.picked,qty);if(s.editIndex>=0)s.rows[s.editIndex]=row;else s.rows.push(row);s.picked=null;s.editIndex=-1;render();return true}
+  if(t.id==='q-food-advanced'){batchRows=s.rows.length?structuredClone(s.rows):[blankFood()];batchDate=s.date;batchTime=s.time;batchCopy=false;modal='batch';render();return true}
+  if(t.id==='q-save-meal'){if(getStorageStatus().blocked)throw Error('기존 기록 보호를 위해 먼저 복구해 주세요.');const rows=quickMealRecords(s),lastGrams={...db.settings.lastGrams,...Object.fromEntries(rows.filter(x=>x.servingUnit==='g').map(x=>[x.name,x.servingQty]))};db=save({...db,meals:[...db.meals,...rows],dayStates:{...db.dayStates,[s.date]:'partial'},settings:{...db.settings,lastGrams}});selectedDate=s.date;page='food';modal=null;quickMeal=null;render();toast('식사를 저장했습니다.');return true}
+ }
+ if(modal==='quick-workout'){
+  const s=quickWorkout;
+  if(t.dataset.qPart){s.part=t.dataset.qPart;render();return true}
+  if(t.dataset.qTitle){s.title=t.dataset.qTitle;render();return true}
+  if(t.dataset.qEx){const item=allExercises().find(x=>(x.id||x.name)===t.dataset.qEx);if(!item)return true;s.exerciseId=item.id||item.name;s.machineId=quickMachineFor(s.exerciseId,s.gymName)?.id||'';const last=quickPreviousSet(s.exerciseId,s.machineId);s.weight=last?.weight??0;s.reps=last?.reps??10;s.unit=last?.unit||db.machines.find(m=>m.id===s.machineId)?.unit||'kg';s.editing=false;render();return true}
+  if(t.id==='q-new-machine'){machineIndex=null;machineEdit={exerciseId:s.exerciseId,location:s.gymName};machinePhoto='';profileReturn='quick-workout';modal='machine';render();return true}
+  if(t.id==='q-work-advanced'){modal='workout';workDraft=[];workMeta={date:s.date,title:s.title,gymName:s.gymName};render();return true}
+  if(t.dataset.qEditSet){const row=s.sets.find(x=>x.id===t.dataset.qEditSet);if(!row)return true;s.editing=true;s.editIndex=s.sets.indexOf(row);s.exerciseId=row.exerciseId;s.machineId=row.machineId;s.weight=row.weight;s.reps=row.reps;s.unit=row.unit;s.completedAt=row.completedAt;render();return true}
+  if(t.id==='q-close-picker'){s.editing=false;s.editIndex=-1;render();return true}
+  if(t.id==='q-first-set'||t.id==='q-next-set'){const last=[...s.sets].reverse().find(x=>x.exerciseId===s.exerciseId&&x.machineId===s.machineId);s.weight=last?.weight??s.weight;s.reps=last?.reps??s.reps;s.unit=last?.unit||s.unit;s.completedAt=quickTime();s.editing=true;s.editIndex=-1;render();return true}
+  if(t.dataset.qUnit){s.unit=t.dataset.qUnit;render();return true}
+  if(t.id==='q-repeat-set'||t.id==='q-save-set'){
+   if(getStorageStatus().blocked)throw Error('기존 기록 보호를 위해 먼저 복구해 주세요.');const item=allExercises().find(x=>(x.id||x.name)===s.exerciseId);if(!item)throw Error('종목을 다시 선택해 주세요.');const last=[...s.sets].reverse().find(x=>x.exerciseId===s.exerciseId&&x.machineId===s.machineId);const direct=t.id==='q-repeat-set',weight=direct?last?.weight:Number(document.getElementById('q-set-weight')?.value),reps=direct?last?.reps:Number(document.getElementById('q-set-reps')?.value),unit=direct?last?.unit:s.unit,completedAt=direct?quickTime():document.getElementById('q-set-time')?.value;if(!Number.isFinite(weight)||weight<0||!Number.isInteger(reps)||reps<1||!['kg','lb'].includes(unit)||!completedAt)throw Error('중량·횟수·단위·시각을 확인해 주세요.');const row={id:s.editIndex>=0?s.sets[s.editIndex].id:uid(),exerciseId:s.exerciseId,machineId:s.machineId,exercise:structuredClone(item),weight,reps,unit,completedAt};if(s.editIndex>=0)s.sets[s.editIndex]=row;else s.sets.push(row);const workout=quickWorkoutRecord(s,db),titles=db.settings.workoutTitles||[],name=s.title.trim();db=save({...db,workouts:s.workoutId?db.workouts.map(w=>w.id===s.workoutId?workout:w):[...db.workouts,workout],settings:{...db.settings,workoutTitles:name?[...new Set([...titles,name])]:titles}});s.workoutId=workout.id;s.editing=false;s.editIndex=-1;render();toast('완료한 세트를 저장했습니다.');return true
+  }
+ }
+ return false;
+}
+function quickInput(t){if(modal==='quick-meal'){if(t.id==='q-food-search'){quickMeal.query=t.value;const pos=t.selectionStart;render();const input=document.getElementById('q-food-search');input?.focus();input?.setSelectionRange(pos,pos);return true}if(t.dataset.qMeta){quickMeal[t.dataset.qMeta]=t.value;return true}}if(modal==='quick-workout'){if(t.id==='q-ex-search'){quickWorkout.query=t.value;const pos=t.selectionStart;render();const input=document.getElementById('q-ex-search');input?.focus();input?.setSelectionRange(pos,pos);return true}if(t.dataset.qWork){if(quickWorkout.sets.length&&['gymName','date'].includes(t.dataset.qWork)){render();throw Error('세트를 기록한 뒤에는 날짜와 헬스장을 바꿀 수 없습니다. 새 운동 기록을 시작해 주세요.')}quickWorkout[t.dataset.qWork]=t.value;if(t.dataset.qWork==='gymName'){const m=quickMachineFor(quickWorkout.exerciseId,t.value);quickWorkout.machineId=m?.id||'';render()}return true}if(t.id==='q-machine'){quickWorkout.machineId=t.value;const m=db.machines.find(x=>x.id===t.value);if(m)quickWorkout.unit=m.unit;render();return true}}return false}
 root.addEventListener('click',async event=>{
  const target=event.target.closest('button,[data-page],[data-metric],[data-filter-part]');if(!target)return;
  try{
@@ -105,8 +144,9 @@ root.addEventListener('click',async event=>{
   if(getStorageStatus().blocked&&!target.dataset.page&&!['cloud-logout','cloud-archive-export','cloud-conflicts-export','recovery-export','retry-recovery','restore-preview','restore-confirm','close','draft-export','draft-archive-export'].includes(target.id)&&target.dataset.modal!=='restore')throw Error('기존 기록 보호를 위해 복구가 필요합니다.');
   if(['workEdit','program','reload','routine'].some(k=>target.dataset[k]!==undefined)||(target.id==='codex-confirm'&&codexDraft?.kind==='workouts')){const pending=readSession();if(pending?.exercises?.some(e=>e.name)&&!confirm('작성 중인 임시 운동이 있습니다. 새로 선택한 운동으로 교체할까요? 취소하면 기존 초안을 유지합니다.'))return;clearSession();savedDraft=null}
   if(target.dataset.page){persistDraft();page=target.dataset.page;modal=null;render();return}
-  if(target.dataset.modal){persistDraft();bodyEditId=null;if(target.dataset.modal==='workout'&&readSession()){resumeSession();return}if(target.dataset.modal==='batch'){batchRows=[blankFood()];batchCopy=false;batchDate=selectedDate;batchSlot='식사';batchTime=new Date().toTimeString().slice(0,5)}modal=target.dataset.modal;mealEditId=null;workEditId=null;routineEditId=null;if(modal==='workout'||modal==='routine'){workDraft=[];workMeta={date:today(),title:modal==='routine'?'나의 루틴':'',duration:'',condition:'',note:''}}render();return}
+  if(target.dataset.modal){persistDraft();bodyEditId=null;const requested=target.dataset.modal;if(requested==='workout'&&readSession()){resumeSession();return}const quick=requested==='batch'?'quick-meal':requested==='workout'?'quick-workout':requested;if(quick==='quick-meal')quickMeal=emptyQuickMeal(selectedDate,new Date().toTimeString().slice(0,5));if(quick==='quick-workout')quickWorkout=emptyQuickWorkout(today(),db.settings.gyms||[]);if(requested==='batch-detail'){batchRows=[blankFood()];batchCopy=false;batchDate=selectedDate;batchSlot='식사';batchTime=new Date().toTimeString().slice(0,5)}modal=requested==='batch-detail'?'batch':quick;mealEditId=null;workEditId=null;routineEditId=null;if(modal==='workout'||modal==='routine'){workDraft=[];workMeta={date:today(),title:modal==='routine'?'나의 루틴':'',duration:'',condition:'',note:''}}render();return}
   if(target.id==='close'||target.id==='backdrop'){persistDraft();modal=['machine','custom-exercise'].includes(modal)?profileReturn:null;render();return}
+  if(quickClick(target))return;
   if(await cloudClick(target))return;
   if(await enhancedClick(target))return;
   if(target.dataset.metric){bodyMetric=target.dataset.metric;render();return}
@@ -151,6 +191,7 @@ root.addEventListener('click',async event=>{
 root.addEventListener('change',async event=>{
  const t=event.target;
  try{
+ if(quickInput(t))return;
  if(enhancedChange(t))return;
  if(t.id==='restore-file'){restoreCandidate=null;document.getElementById('restore-confirm').disabled=true;return}
  if(t.id==='machine-photo'){await readMachinePhoto(t);return}
@@ -170,6 +211,7 @@ root.addEventListener('change',async event=>{
 root.addEventListener('input',event=>{
  const t=event.target;
  try{
+ if(quickInput(t))return;
  if(enhancedInput(t))return;
  if(t.dataset.ex){workDraft[Number(t.closest('[data-ei]').dataset.ei)][t.dataset.ex]=t.value;return}
  if(t.dataset.set){const row=t.closest('[data-si]');workDraft[Number(t.closest('[data-ei]').dataset.ei)].sets[Number(row.dataset.si)][t.dataset.set]=t.type==='checkbox'?t.checked:t.value;return}
@@ -182,7 +224,7 @@ root.addEventListener('submit',event=>{
  try{
   if(backupBusy)throw Error('백업·복원 완료 후 저장해 주세요.');
   if(getStorageStatus().blocked)throw Error('기존 기록 보호를 위해 먼저 복구해 주세요.');
-  if(form.id==='machine-form'){const item=cleanMachine({...d,id:d.recordId,photoDataUrl:machinePhoto});db=save({...db,machines:[...(db.machines||[]).filter(x=>x.id!==item.id),item]});if(machineIndex!==null&&workDraft[machineIndex]){workDraft[machineIndex].machineId=item.id;for(const set of workDraft[machineIndex].sets)if(Number(set.weight)===0)set.unit=item.unit}modal=profileReturn;render();toast('머신을 저장했습니다.');return}
+  if(form.id==='machine-form'){const item=cleanMachine({...d,id:d.recordId,photoDataUrl:machinePhoto});db=save({...db,machines:[...(db.machines||[]).filter(x=>x.id!==item.id),item]});if(machineIndex!==null&&workDraft[machineIndex]){workDraft[machineIndex].machineId=item.id;for(const set of workDraft[machineIndex].sets)if(Number(set.weight)===0)set.unit=item.unit}if(profileReturn==='quick-workout'&&quickWorkout){quickWorkout.machineId=item.id;quickWorkout.unit=item.unit}modal=profileReturn;render();toast('머신을 저장했습니다.');return}
   if(form.id==='custom-exercise-form'){const fd=new FormData(form);const item=cleanCustomExercise({...d,id:d.recordId,aliases:d.aliases.split(',').map(x=>x.trim()).filter(Boolean),primaryMuscleIds:fd.getAll('primaryMuscleIds'),secondaryMuscleIds:fd.getAll('secondaryMuscleIds')});db=save({...db,customExercises:[...(db.customExercises||[]).filter(x=>x.id!==item.id),item]});modal=profileReturn;render();toast('종목을 저장했습니다.');return}
   if(form.id==='body-form'){const prior=db.body.find(x=>x.id===bodyEditId);const b=cleanBody({...prior,...d,id:prior?.id,updatedAt:new Date().toISOString()});db=prior?replace(db,'body',b):add(db,'body',b);bodyEditId=null;page='body'}
   else if(form.id==='batch-form'){const rows=batchMeals(batchRows,d.date,d.slot,d.time).map((x,i)=>({...x,copyKey:batchCopy?`${batchRows[i].id}:${d.date}`:''}));if(batchCopy&&rows.some(x=>db.meals.some(m=>m.copyKey&&m.copyKey===x.copyKey)))throw Error('이미 복사한 식사가 있습니다. 중복을 확인해 주세요.');let next={...db,meals:[...db.meals,...rows],dayStates:{...db.dayStates,[d.date]:'partial'},settings:{...db.settings,lastGrams:{...db.settings.lastGrams,...Object.fromEntries(rows.filter(x=>x.servingUnit==='g').map(x=>[x.name,x.servingQty]))}}};if((d.recipeName||'').trim())next.recipes=[...(db.recipes||[]),createRecipe(d.recipeName,rows)];db=save(next);selectedDate=d.date;page='food';batchRows=[]}
