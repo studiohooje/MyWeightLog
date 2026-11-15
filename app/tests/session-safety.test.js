@@ -46,8 +46,10 @@ test('app resumes durable workout and cancellation protects it from program repl
 test('successful workout completion clears draft; later render cannot recreate completed draft',async()=>{
  const fixture=await appFixture();
  try{
-  await fixture.click({program:'full-body:0'});assert.ok(fixture.disk.has(KEY));fixture.completeFirstSet();
-  fixture.submit('workout-form',{date:'2026-11-01',duration:'40',title:'저장 완료 운동',condition:'4',note:''});
+  assert.equal(fixture.disk.has(KEY),false,`unexpected initial draft: ${[...fixture.disk.keys()]}`);
+  await fixture.click({program:'full-body:0'});assert.ok(fixture.disk.has(KEY));assert.match(fixture.root.innerHTML,/workout-form/,`초안 화면 누락: ${fixture.toasts.join(' | ')}`);fixture.completeFirstSet();
+  await fixture.submit('workout-form',{date:'2026-11-01',duration:'40',title:'저장 완료 운동',condition:'4',note:''});
+  assert.ok(fixture.disk.get('myweightlog.v1'),`운동 저장 실패: ${fixture.toasts.join(' | ')}`);
   assert.equal(JSON.parse(fixture.disk.get('myweightlog.v1')).workouts.length,1);assert.equal(fixture.disk.has(KEY),false);
   await fixture.click({page:'home'});await fixture.click({page:'workout'});assert.equal(fixture.disk.has(KEY),false);
  }finally{fixture.close()}
@@ -58,7 +60,7 @@ test('committed draft cannot be resumed as a duplicate when draft removal fails'
  try{
   await fixture.click({program:'full-body:0'});fixture.completeFirstSet();
   globalThis.localStorage.removeItem=()=>{throw Error('remove blocked')};
-  fixture.submit('workout-form',{date:'2026-11-02',title:'정리 실패에도 한 번만 저장',duration:'10'});
+  await fixture.submit('workout-form',{date:'2026-11-02',title:'정리 실패에도 한 번만 저장',duration:'10'});
   const db=JSON.parse(fixture.disk.get('myweightlog.v1'));
   assert.equal(db.workouts.length,1);assert.equal(db.workouts[0].sourceDraftId,readSession().id);
   await fixture.click({modal:'workout'});
