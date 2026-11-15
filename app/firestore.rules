@@ -1,11 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function owner(uid) {
-      // Replace only after the intended owner signs in; default denies every account.
-      return request.auth != null && request.auth.uid == uid
-        && request.auth.uid in ['OWNER_UID_NOT_CONFIGURED'];
-    }
+    function signedIn() { return request.auth != null; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function admin() { return signedIn() && request.auth.uid == 'x65cKbgpsQVk6oj7JIDnLVFDYtN2'; }
     match /users/{uid}/records/{recordId} {
       allow read: if owner(uid);
       allow create: if owner(uid) && validRecord() && request.resource.data.revision == 1;
@@ -19,6 +17,75 @@ service cloud.firestore {
           && (request.resource.data.payload == null || (request.resource.data.payload is string && request.resource.data.payload.size() < 800000))
           && request.resource.data.updatedAt == request.time;
       }
+    }
+    match /catalog/{kind}/items/{itemId} {
+      function catalogKind() {
+        return kind in ['foods','exercises','machineModels','gymLocations','gymMachines'];
+      }
+      function validCatalog() {
+        return catalogKind()
+          && request.resource.data.id == itemId
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 160
+          && request.resource.data.published == true
+          && request.resource.data.revision is int
+          && request.resource.data.updatedAt == request.time;
+      }
+      allow get, list: if signedIn() && catalogKind()
+        && (resource.data.published == true || admin());
+      allow create: if admin() && validCatalog()
+        && request.resource.data.revision == 1;
+      allow update: if admin() && validCatalog()
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
+    match /catalogRequests/{requestId} {
+      function validNewRequest() {
+        return request.resource.data.keys().hasOnly([
+            'type','mode','name','manufacturer','model','gymName','targetIds','note',
+            'servingQty','servingUnit','calories','carbs','protein','fat',
+            'requesterUid','photoPath','status','adminNote','createdAt','updatedAt'
+          ])
+          && request.resource.data.keys().hasAll([
+            'type','mode','name','manufacturer','model','gymName','targetIds','note',
+            'servingQty','servingUnit','calories','carbs','protein','fat',
+            'requesterUid','photoPath','status','adminNote','createdAt','updatedAt'
+          ])
+          && request.resource.data.requesterUid == request.auth.uid
+          && request.resource.data.type in ['food','exercise','machine']
+          && request.resource.data.mode in ['photo','manual']
+          && request.resource.data.name is string && request.resource.data.name.size() <= 160
+          && request.resource.data.manufacturer is string && request.resource.data.manufacturer.size() <= 160
+          && request.resource.data.model is string && request.resource.data.model.size() <= 160
+          && request.resource.data.gymName is string && request.resource.data.gymName.size() <= 160
+          && request.resource.data.note is string && request.resource.data.note.size() <= 1000
+          && request.resource.data.servingUnit is string
+          && request.resource.data.servingUnit in ['', 'g', '개', '회']
+          && (request.resource.data.servingQty == null || (request.resource.data.servingQty is number && request.resource.data.servingQty > 0))
+          && (request.resource.data.calories == null || (request.resource.data.calories is number && request.resource.data.calories >= 0))
+          && (request.resource.data.carbs == null || (request.resource.data.carbs is number && request.resource.data.carbs >= 0))
+          && (request.resource.data.protein == null || (request.resource.data.protein is number && request.resource.data.protein >= 0))
+          && (request.resource.data.fat == null || (request.resource.data.fat is number && request.resource.data.fat >= 0))
+          && request.resource.data.targetIds is list && request.resource.data.targetIds.size() <= 24
+          && request.resource.data.photoPath is string
+          && (request.resource.data.photoPath == '' || request.resource.data.photoPath == 'catalogRequests/' + request.auth.uid + '/' + requestId + '/photo')
+          && (request.resource.data.mode != 'photo' || request.resource.data.photoPath != '')
+          && request.resource.data.status == 'pending'
+          && request.resource.data.adminNote == ''
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+      }
+      allow get, list: if signedIn()
+        && (resource.data.requesterUid == request.auth.uid || admin());
+      allow create: if signedIn() && validNewRequest();
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','adminNote','reviewerUid','updatedAt'])
+        && request.resource.data.status in ['in_review','approved','rejected','needs_info']
+        && request.resource.data.adminNote is string && request.resource.data.adminNote.size() <= 1000
+        && request.resource.data.reviewerUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
   }
 }

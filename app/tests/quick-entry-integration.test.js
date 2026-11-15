@@ -28,5 +28,12 @@ test('실제 앱 버튼에서 빠른 식사와 연속 운동 세트를 같은 �
   await click({},'q-first-set');fields.set('q-set-weight',{value:'120'});fields.set('q-set-reps',{value:'10'});fields.set('q-set-time',{value:'2026-11-13T13:40'});await click({},'q-save-set');
   await click({},'q-repeat-set');db=JSON.parse(disk.get('myweightlog.v1'));assert.equal(db.workouts.length,1);assert.equal(db.workouts[0].exercises[0].sets.length,2);assert.equal(db.workouts[0].exercises[0].machineId,seed.machines[0].id);assert.equal(db.workouts[0].exercises[0].sets[0].completedAt,'2026-11-13T13:40');assert.equal(toasts.some(x=>x.includes('실패')),false);
   await click({},'close');await click({modal:'workout'});assert.match(root.innerHTML,/2세트 · 저장됨/);
+  await click({},'q-new-workout');
+  const bulgarian=EXERCISE_CATALOG.find(x=>x.name==='불가리안 스플릿 스쿼트');
+  await click({qEx:bulgarian.id});
+  assert.match(root.innerHTML,/중량은 한 손 기준 · 양손 각각/);
+  assert.match(root.innerHTML,/한쪽 다리 기준/);
+  await click({},'q-first-set');
+  assert.match(root.innerHTML,/value="0"/);
  }finally{for(const [k,descriptor]of Object.entries(old)){if(descriptor)Object.defineProperty(globalThis,k,descriptor);else delete globalThis[k]}}
 });

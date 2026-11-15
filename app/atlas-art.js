@@ -15,6 +15,8 @@ export const regions={front:[
  ['traps','M69 51 L77 50 L77 80 L64 74 L50 64 L59 57Z'],
  ['shoulders','M43 59 Q32 62 30 75 L30 88 L43 81 L51 67Z'],
  ['back','M51 72 L64 80 L77 86 L76 123 L69 143 L58 132 L51 110 L46 88Z'],
+ // Narrow lower-back columns on either side of the spine; distinct from the broad back region.
+ ['erectors','M72 112 L77 113 L77 145 L74 147 L70 137 L70 122Z'],
  ['triceps','M33 87 Q39 83 44 85 L42 103 L35 118 L28 119 L28 106Z'],
  ['forearms','M26 124 L34 120 L29 141 L24 153 L18 155Z'],
  ['glutes','M57 146 Q67 141 77 146 L77 173 Q65 181 53 172 L51 162Z'],
