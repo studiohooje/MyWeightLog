@@ -32,7 +32,7 @@ let machinePhoto='',batchCopy=false;let undoDraft=null,analysisMachine='all',ana
 let machineIndex=null,profileReturn='workout',machineEdit=null,customEdit=null;
 let bodyEditId=null,selection={tab:'recent',part:'전체',equipment:'전체'},batchRows=[],batchDate=today(),batchSlot='식사',batchTime=new Date().toTimeString().slice(0,5),restoreCandidate=null;
 let draftWarning='',savedDraft=null,backupBusy=false,renderedModal=null;
-let quickMeal=null,quickWorkout=null;
+let quickMeal=null,quickWorkout=null,composingSearch=false;
 try{savedDraft=readSession();if(savedDraft&&db.workouts.some(w=>w.sourceDraftId===savedDraft.id)){savedDraft=null;try{clearSession()}catch{}}timerEnds=savedDraft?.timerEnds||0}catch(e){draftWarning=e.message}
 const root=document.getElementById('app');
 function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -137,7 +137,7 @@ function quickClick(t){
  }
  return false;
 }
-function quickInput(t){if(modal==='quick-meal'){if(t.id==='q-food-search'){quickMeal.query=t.value;const pos=t.selectionStart;render();const input=document.getElementById('q-food-search');input?.focus();input?.setSelectionRange(pos,pos);return true}if(t.dataset.qMeta){quickMeal[t.dataset.qMeta]=t.value;return true}}if(modal==='quick-workout'){if(t.id==='q-ex-search'){quickWorkout.query=t.value;const pos=t.selectionStart;render();const input=document.getElementById('q-ex-search');input?.focus();input?.setSelectionRange(pos,pos);return true}if(t.dataset.qWork){if(quickWorkout.sets.length&&['gymName','date'].includes(t.dataset.qWork)){render();throw Error('세트를 기록한 뒤에는 날짜와 헬스장을 바꿀 수 없습니다. 새 운동 기록을 시작해 주세요.')}quickWorkout[t.dataset.qWork]=t.value;if(t.dataset.qWork==='gymName'){const m=quickMachineFor(quickWorkout.exerciseId,t.value);quickWorkout.machineId=m?.id||'';render()}return true}if(t.id==='q-machine'){quickWorkout.machineId=t.value;const m=db.machines.find(x=>x.id===t.value);if(m)quickWorkout.unit=m.unit;render();return true}}return false}
+function quickInput(t){if(modal==='quick-meal'){if(t.id==='q-food-search'){quickMeal.query=t.value;if(composingSearch)return true;const pos=t.selectionStart;render();const input=document.getElementById('q-food-search');input?.focus();input?.setSelectionRange(pos,pos);return true}if(t.dataset.qMeta){quickMeal[t.dataset.qMeta]=t.value;return true}}if(modal==='quick-workout'){if(t.id==='q-ex-search'){quickWorkout.query=t.value;if(composingSearch)return true;const pos=t.selectionStart;render();const input=document.getElementById('q-ex-search');input?.focus();input?.setSelectionRange(pos,pos);return true}if(t.dataset.qWork){if(quickWorkout.sets.length&&['gymName','date'].includes(t.dataset.qWork)){render();throw Error('세트를 기록한 뒤에는 날짜와 헬스장을 바꿀 수 없습니다. 새 운동 기록을 시작해 주세요.')}quickWorkout[t.dataset.qWork]=t.value;if(t.dataset.qWork==='gymName'){const m=quickMachineFor(quickWorkout.exerciseId,t.value);quickWorkout.machineId=m?.id||'';render()}return true}if(t.id==='q-machine'){quickWorkout.machineId=t.value;const m=db.machines.find(x=>x.id===t.value);if(m)quickWorkout.unit=m.unit;render();return true}}return false}
 root.addEventListener('click',async event=>{
  const target=event.target.closest('button,[data-page],[data-metric],[data-filter-part]');if(!target)return;
  try{
@@ -209,6 +209,8 @@ root.addEventListener('change',async event=>{
  if(t.closest('#meal-form'))mealPreview(t.form,scaleNutrition);
  }catch(e){toast(e.message)}finally{persistDraft()}
 });
+root.addEventListener('compositionstart',event=>{if(['q-food-search','q-ex-search'].includes(event.target.id))composingSearch=true});
+root.addEventListener('compositionend',event=>{if(!['q-food-search','q-ex-search'].includes(event.target.id))return;composingSearch=false;quickInput(event.target)});
 root.addEventListener('input',event=>{
  const t=event.target;
  try{

@@ -93,3 +93,15 @@ button:focus-visible,[role=button]:focus-visible,summary:focus-visible{outline:2
 .food-entry-list{display:grid;gap:18px}.food-entry{margin:0;min-width:0;border:1px solid var(--line);border-radius:14px;background:#12263c;padding:20px;display:grid;gap:16px}.food-entry legend{font-weight:800;padding:0 8px}.food-entry .nutrient-fields{padding-top:16px;border-top:1px solid var(--line)}.gram-picks{display:flex;gap:8px;flex-wrap:wrap}.gram-manager{font-size:12px;color:var(--muted)}.gram-manager summary{cursor:pointer;padding:8px 0}.gram-editor{display:flex;gap:8px;align-items:center}.gram-editor input{flex:1;min-width:0}.meal-running-total{padding:14px 16px;border-radius:11px;background:#17334e;color:#dff0ff;font-weight:750}.title-presets{display:flex;flex-wrap:wrap;gap:8px}.title-preset{display:inline-flex;background:#173b5c;border:1px solid #37638a;border-radius:100px;overflow:hidden}.title-preset button{border:0;background:none;color:#e9f4ff;min-height:36px;padding:7px 12px}.title-preset button+button{padding:7px 10px;color:#b8d4e9;border-left:1px solid #37638a;font-size:18px}.set-time{margin-top:6px}
 @media(max-width:650px){.food-entry{padding:16px}.gram-editor{display:grid}.title-presets{gap:6px}}
 
+/* Nutrition palette D: one meaning and one color in every view. */
+:root{--nutrient-kcal:#66d9ef;--nutrient-carbs:#ead96b;--nutrient-protein:#77d7b0;--nutrient-fat:#ff8396}
+.nutrition-goal.kcal,.nutrition-share.kcal span{color:var(--nutrient-kcal)}
+.nutrition-goal.carbs,.nutrition-share.carbs span{color:var(--nutrient-carbs)}
+.nutrition-goal.protein,.nutrition-share.protein span{color:var(--nutrient-protein)}
+.nutrition-goal.fat,.nutrition-share.fat span{color:var(--nutrient-fat)}
+.nutrition-goal.kcal i{background:var(--nutrient-kcal)}
+.nutrition-goal.carbs i{background:var(--nutrient-carbs)}
+.nutrition-goal.protein i{background:var(--nutrient-protein)}
+.nutrition-goal.fat i{background:var(--nutrient-fat)}
+@media(max-width:650px){.nutrition-summary{gap:20px}.nutrition-summary .card{padding:22px 20px}.nutrition-summary .nutrition-goal-head{line-height:1.5}.nutrition-summary .nutrition-goal small{line-height:1.5;margin-top:8px}.nutrition-summary .nutrition-track{margin-top:12px}.nutrition-meal-list{gap:18px}.nutrition-meal{padding:22px 20px}.nutrition-food{padding:14px 0}.nutrition-food small{line-height:1.5}.nutrition-share{padding:14px;gap:7px}.nutrition-share span,.nutrition-share small{line-height:1.4}}
+

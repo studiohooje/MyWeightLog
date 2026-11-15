@@ -17,10 +17,14 @@ test('실제 앱 버튼에서 빠른 식사와 연속 운동 세트를 같은 �
   await import('../app.js?quick-integration');
   const click=async(dataset={},id='')=>events.get('click')({target:{closest:()=>({dataset,id})}});
   await click({modal:'batch'});assert.match(root.innerHTML,/빠른 식사 기록/);
+  const search={id:'q-food-search',value:'제로핵',selectionStart:3};const beforeComposition=root.innerHTML;
+  events.get('compositionstart')({target:search});events.get('input')({target:search});assert.equal(root.innerHTML,beforeComposition);
+  events.get('compositionend')({target:search});assert.match(root.innerHTML,/제로핵/);
+  search.value='';events.get('input')({target:search});
   await click({qFood:'현미밥|g'});fields.set('q-qty',{value:'210'});await click({},'q-confirm-food');await click({},'q-save-meal');
   let db=JSON.parse(disk.get('myweightlog.v1'));assert.equal(db.meals.length,2);assert.equal(db.meals[1].servingQty,210);assert.equal(db.meals[1].calories,346.5);
   await click({modal:'workout'});assert.match(root.innerHTML,/빠른 완료 세트 기록/);
-  await click({qEx:leg.id});assert.match(root.innerHTML,/LP-A/);assert.match(root.innerHTML,/주·보조 근육 그림 보기/);
+  await click({qEx:leg.id});assert.match(root.innerHTML,/LP-A/);assert.match(root.innerHTML,/주·보조 근육 그림 보기/);assert.match(root.innerHTML,/quick-mini-back-back/);
   await click({},'q-first-set');fields.set('q-set-weight',{value:'120'});fields.set('q-set-reps',{value:'10'});fields.set('q-set-time',{value:'2026-11-13T13:40'});await click({},'q-save-set');
   await click({},'q-repeat-set');db=JSON.parse(disk.get('myweightlog.v1'));assert.equal(db.workouts.length,1);assert.equal(db.workouts[0].exercises[0].sets.length,2);assert.equal(db.workouts[0].exercises[0].machineId,seed.machines[0].id);assert.equal(db.workouts[0].exercises[0].sets[0].completedAt,'2026-11-13T13:40');assert.equal(toasts.some(x=>x.includes('실패')),false);
   await click({},'close');await click({modal:'workout'});assert.match(root.innerHTML,/2세트 · 저장됨/);
