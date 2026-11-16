@@ -4,7 +4,44 @@ import {cloudRecords,planSync,recordsToDB,validRecordKey} from './cloud-model.js
 import {STORAGE_KEY,RESTORE_PENDING_KEY,getLoadedRaw} from './store.js';
 import {isNative,signInNativeGoogle,signOutNativeGoogle} from './native-auth.js';
 let auth, authSDK, firestore, fsSDK;
-export const cloudState = {configured:!!firebaseConfig,user:null,error:'',native:isNative(),conflicts:[]};
+const ADMIN_UID='x65cKbgpsQVk6oj7JIDnLVFDYtN2';
+export const cloudState = {configured:!!firebaseConfig,user:null,error:'',native:isNative(),conflicts:[],approval:'guest',approvalError:'',applicants:[]};
+const profileRef=uid=>fsSDK.doc(firestore,'users',uid);
+export async function refreshApproval(){
+  const user=auth?.currentUser;
+  if(!user){cloudState.approval='guest';return 'guest'}
+  if(user.uid===ADMIN_UID){cloudState.approval='approved';cloudState.approvalError='';return 'approved'}
+  try{
+    const snapshot=await fsSDK.getDocFromServer(profileRef(user.uid));
+    cloudState.approval=snapshot.exists()?snapshot.data().status:'not_applied';
+    cloudState.approvalError='';
+  }catch(error){cloudState.approval='unknown';cloudState.approvalError=error.message||'상태 확인 실패'}
+  return cloudState.approval;
+}
+export async function applyForAccess(consent){
+  const user=auth?.currentUser;
+  if(!user)throw Error('Google로 먼저 로그인해 주세요.');
+  if(user.uid===ADMIN_UID)return 'approved';
+  if(consent!==true)throw Error('건강 기록의 서버 저장 안내를 확인하고 동의해 주세요.');
+  await fsSDK.runTransaction(firestore,async tx=>{
+    const ref=profileRef(user.uid),before=await tx.get(ref);
+    if(before.exists())throw Error('이미 신청한 계정입니다. 상태를 새로 확인해 주세요.');
+    tx.set(ref,{uid:user.uid,email:user.email||'',status:'pending',consentAt:fsSDK.serverTimestamp(),createdAt:fsSDK.serverTimestamp(),updatedAt:fsSDK.serverTimestamp()});
+  });
+  return refreshApproval();
+}
+export async function listApplicants(){
+  if(auth?.currentUser?.uid!==ADMIN_UID)throw Error('관리자만 신청 목록을 볼 수 있습니다.');
+  const snapshot=await fsSDK.getDocsFromServer(fsSDK.collection(firestore,'users'));
+  cloudState.applicants=snapshot.docs.map(doc=>({uid:doc.id,...doc.data()}));
+  return cloudState.applicants;
+}
+export async function reviewApplicant(uid,status){
+  if(auth?.currentUser?.uid!==ADMIN_UID)throw Error('관리자만 가입을 승인할 수 있습니다.');
+  if(!uid||!['pending','approved','rejected'].includes(status))throw Error('신청 상태를 확인해 주세요.');
+  await fsSDK.updateDoc(profileRef(uid),{status,reviewerUid:ADMIN_UID,reviewedAt:fsSDK.serverTimestamp(),updatedAt:fsSDK.serverTimestamp()});
+  return listApplicants();
+}
 export async function initializeCloud() {
   if (!firebaseConfig || typeof window === 'undefined') return;
   let timeout;
@@ -25,6 +62,7 @@ export async function initializeCloud() {
     cloudState.user=auth.currentUser;
     setStorageAccount(auth.currentUser?.uid || '');
     firestore=fsSDK.getFirestore(app);
+    await refreshApproval();
     // Cross-tab auth changes never leave a previous user's records on the screen.
     authSDK.onAuthStateChanged(auth,user=>{if((user?.uid||'')!==storageAccount())location.reload();});
   } catch {
@@ -54,6 +92,7 @@ export function syncMetadata() {
 export async function synchronize(db, save, choices={}) {
   const user=auth?.currentUser;
   if(!user||user.uid!==storageAccount())throw Error('먼저 로그인해 주세요.');
+  if(cloudState.approval!=='approved')throw Error('계정 이용 승인 후 Firebase 동기화를 사용할 수 있습니다.');
   const scope=storageAccount(), current=cloudRecords(db), baseline=syncMetadata();
   const originalRaw=localStorage.getItem(STORAGE_KEY), originalBaseline=localStorage.getItem(scopedKey('myweightlog.cloud.baseline'));
   if(originalRaw!==getLoadedRaw())throw Error('다른 탭에서 기록이 변경됐습니다. 페이지를 새로 열고 다시 동기화해 주세요.');

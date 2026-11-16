@@ -4,10 +4,35 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function admin() { return signedIn() && request.auth.uid == 'x65cKbgpsQVk6oj7JIDnLVFDYtN2'; }
+    function approved() {
+      return admin() || (signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved');
+    }
+    match /users/{uid} {
+      allow get: if owner(uid) || admin();
+      allow list: if admin();
+      allow create: if owner(uid) && !admin()
+        && request.resource.data.keys().hasOnly(['uid','email','status','consentAt','createdAt','updatedAt'])
+        && request.resource.data.keys().hasAll(['uid','email','status','consentAt','createdAt','updatedAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.status == 'pending'
+        && request.resource.data.consentAt == request.time
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt','reviewerUid','updatedAt'])
+        && request.resource.data.status in ['pending','approved','rejected']
+        && request.resource.data.reviewerUid == request.auth.uid
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
     match /users/{uid}/records/{recordId} {
-      allow read: if owner(uid);
-      allow create: if owner(uid) && validRecord() && request.resource.data.revision == 1;
-      allow update: if owner(uid) && validRecord()
+      allow read: if owner(uid) && approved();
+      allow create: if owner(uid) && approved() && validRecord() && request.resource.data.revision == 1;
+      allow update: if owner(uid) && approved() && validRecord()
         && request.resource.data.revision == resource.data.revision + 1;
       // Deletions use versioned null payloads, never remove tombstones.
       allow delete: if false;
@@ -32,7 +57,7 @@ service cloud.firestore {
           && request.resource.data.revision is int
           && request.resource.data.updatedAt == request.time;
       }
-      allow get, list: if signedIn() && catalogKind()
+      allow get, list: if approved() && catalogKind()
         && (resource.data.published == true || admin());
       allow create: if admin() && validCatalog()
         && request.resource.data.revision == 1;
@@ -76,9 +101,9 @@ service cloud.firestore {
           && request.resource.data.createdAt == request.time
           && request.resource.data.updatedAt == request.time;
       }
-      allow get, list: if signedIn()
+      allow get, list: if approved()
         && (resource.data.requesterUid == request.auth.uid || admin());
-      allow create: if signedIn() && validNewRequest();
+      allow create: if approved() && validNewRequest();
       allow update: if admin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','adminNote','reviewerUid','updatedAt'])
         && request.resource.data.status in ['in_review','approved','rejected','needs_info']

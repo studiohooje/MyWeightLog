@@ -1,4 +1,5 @@
 import {firebaseConfig} from './firebase-config.js';
+import {cloudState} from './cloud-sync.js';
 
 export const CATALOG_KINDS=Object.freeze(['foods','exercises','machineModels','gymLocations','gymMachines']);
 const ADMIN_UID='x65cKbgpsQVk6oj7JIDnLVFDYtN2';
@@ -65,6 +66,7 @@ async function context(){
  try{app=modules.app.getApp()}catch{throw Error('계정 연결이 아직 준비되지 않았습니다.')}
  const auth=modules.auth.getAuth(app),user=auth.currentUser;
  if(!user)throw Error('공용 도감을 사용하려면 먼저 로그인해 주세요.');
+ if(cloudState.approval!=='approved')throw Error('계정 이용 승인 후 공용 도감과 등록 요청을 사용할 수 있습니다.');
  return {...modules,app,user,firestore:modules.db.getFirestore(app)};
 }
 
@@ -99,6 +101,7 @@ export async function saveSharedCatalogItem(kind,input){
 
 export async function submitCatalogRequest(input,photoFile){
  const request=validateCatalogRequest(input),ctx=await context();
+ if(request.mode==='photo'||photoFile)throw Error('사진 등록 요청은 서버 사진 저장 준비 후 사용할 수 있습니다. 지금은 직접 입력으로 요청해 주세요.');
  if(request.mode==='photo'&&!photoFile)throw Error('사진 요청에는 머신 사진을 첨부해 주세요.');
  if(photoFile&&(!['image/jpeg','image/png','image/webp'].includes(photoFile.type)||photoFile.size>5*1024*1024||photoFile.size===0))throw Error('5MB 이하 JPEG·PNG·WebP 사진을 선택해 주세요.');
  const id=globalThis.crypto?.randomUUID?.()??`request-${Date.now()}`;
