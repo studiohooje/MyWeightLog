@@ -20,5 +20,8 @@
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",
     "@firebase/rules-unit-testing": "^5.0.2"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7"
   }
 }
