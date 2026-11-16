@@ -4,3 +4,38 @@
 .quick-flow{gap:20px}.quick-flow .quick-top{gap:8px}.quick-goals,.quick-choices,.quick-picked,.quick-current{padding:20px;gap:16px}.quick-goals{column-gap:12px;row-gap:14px}.quick-goals .nutrition-goal{padding:12px;min-height:92px}.quick-goals .nutrition-goal-head{gap:5px;font-size:13px;line-height:1.4}.quick-goals .nutrition-goal-head span{font-size:13px;white-space:normal;line-height:1.4}.quick-goals .nutrition-goal small{font-size:12px;line-height:1.4;margin-top:8px}.quick-goals .nutrition-track{margin-top:10px;height:8px}.quick-goals .nutrition-goal.fat,.quick-share span:nth-child(4){color:var(--nutrient-fat)}.quick-goals .nutrition-goal.fat i{background:var(--nutrient-fat)}.quick-share span:nth-child(1){color:var(--nutrient-kcal)}.quick-share span:nth-child(2){color:var(--nutrient-carbs)}.quick-share span:nth-child(3){color:var(--nutrient-protein)}.quick-choice-list{gap:10px;max-height:220px}.quick-choice{padding:13px;min-height:66px}.quick-choice strong,.quick-picked-row strong{font-size:14px;line-height:1.45}.quick-choice small,.quick-picked-row small{font-size:12px;line-height:1.5;margin-top:6px}.quick-picked-row{gap:12px;padding-top:14px}.quick-picked-actions button,.quick-set-line button{font-size:12px;min-height:38px}.quick-mini-target{padding:14px;gap:14px}.quick-mini-pair{display:flex;gap:3px;flex:0 0 auto}.quick-mini-pair .anatomy-map{width:46px;height:82px}.quick-mini-target strong{font-size:13px;line-height:1.45}.quick-mini-target small{font-size:11px;line-height:1.5}.quick-set-line{gap:9px;padding:11px 0;font-size:12px}
 @media(max-width:470px){.quick-flow{gap:18px}.quick-goals,.quick-choices,.quick-picked,.quick-current{padding:16px}.quick-goals{gap:10px}.quick-goals .nutrition-goal{padding:10px;min-height:94px}.quick-time{gap:10px}.quick-mini-pair .anatomy-map{width:36px;height:72px}.quick-share>div{gap:8px}}
 .quick-choices>.text-button{display:block;min-height:40px;padding:10px 8px;line-height:1.4;text-align:center}
+
+/* The selected quick-search pattern: one compact floating workspace for meals and workouts. */
+.modal-backdrop.quick-palette{align-items:flex-start;padding:clamp(14px,5dvh,48px) 16px calc(14px + env(safe-area-inset-bottom));background:#020914cf}
+.quick-palette .sheet{width:min(100%,660px);max-height:calc(100dvh - clamp(28px,10dvh,96px));padding:0 0 calc(10px + env(safe-area-inset-bottom));border:1px solid #5181a9;border-radius:22px;box-shadow:0 24px 80px #000b;overscroll-behavior:contain;scrollbar-color:#47769a transparent}
+.quick-palette .sheet-head{position:sticky;top:0;z-index:5;align-items:center;min-height:62px;margin:0;padding:14px 20px;background:#122c45;border-bottom:1px solid #426884}
+.quick-palette .sheet-head h2{font-size:18px;margin:0;letter-spacing:-.035em}
+.quick-palette .sheet-head .close{width:36px;height:36px;border-radius:10px;background:#22425e;color:#eaf4ff;font-size:20px;line-height:1}
+.quick-palette .quick-flow{display:flex;flex-direction:column;gap:12px;padding:18px 20px 8px}
+.quick-palette .quick-flow>.quick-top{order:0}
+.quick-palette .quick-flow>.quick-choices{order:1}
+.quick-palette .quick-flow>.quick-overlay{order:2}
+.quick-palette .quick-flow>.quick-current,.quick-palette .quick-flow>.quick-picked{order:3}
+.quick-palette .quick-flow>.quick-time,.quick-palette .quick-flow>.field,.quick-palette .quick-flow>.chip-row,.quick-palette .quick-flow>.text-button{order:4}
+.quick-palette .quick-flow>.quick-goals{order:5}
+.quick-palette .quick-flow>.quick-primary{order:6;position:static;margin-bottom:5px}
+.quick-palette .quick-top .hint{font-size:12px;line-height:1.5}
+.quick-palette .quick-choices{display:flex;flex-direction:column;gap:10px;padding:14px;border-color:#47759c;background:#102b45}
+.quick-palette .quick-choices>input[type=search]{order:-2;min-height:48px;padding:12px 15px;font-size:15px;background:#091b2e;border:1px solid #60a5dc;border-radius:12px}
+.quick-palette .quick-choices>input[type=search]::placeholder{color:#9ab7cf}
+.quick-palette .quick-choices>.section-title,.quick-palette .quick-choices>h3{order:-1;margin:0}
+.quick-palette .quick-choices>.chip-row{flex:none}
+.quick-palette .quick-choice-list{max-height:196px;grid-template-columns:1fr;gap:6px}
+.quick-palette .quick-choice{min-height:53px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.quick-palette .quick-choice strong{font-size:13px;margin:0}
+.quick-palette .quick-choice small{margin:0;text-align:right}
+.quick-palette .quick-current,.quick-palette .quick-picked,.quick-palette .quick-goals{padding:15px}
+.quick-palette .quick-overlay{position:relative;bottom:auto;margin:0;padding:15px;border-radius:14px;box-shadow:none;background:#173b59}
+.quick-palette .quick-flow:has(>.quick-overlay)>.quick-choices{display:none}
+.quick-palette .quick-flow:has(>.quick-overlay)>.quick-goals{display:none}
+.quick-palette .quick-flow:has(>.quick-overlay)>.quick-current{display:none}
+.quick-palette .quick-flow:has(>.quick-overlay)>.quick-picked{display:none}
+.quick-palette .quick-food-macro{line-height:1.5}
+.quick-palette .quick-set-line{grid-template-columns:44px minmax(0,1fr);gap:7px}
+.quick-palette .quick-set-line button{grid-column:2;justify-self:start;white-space:normal;text-align:left}
+@media(max-width:600px){.modal-backdrop.quick-palette{padding:calc(8px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom))}.quick-palette .sheet{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:18px}.quick-palette .sheet-head{padding:12px 15px}.quick-palette .quick-flow{padding:15px 14px 8px}.quick-palette .quick-choices{padding:12px}.quick-palette .quick-choice{align-items:flex-start;flex-direction:column;gap:2px}.quick-palette .quick-choice small{text-align:left}.quick-palette .quick-time{grid-template-columns:repeat(2,minmax(0,1fr))}}
