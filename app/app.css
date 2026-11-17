@@ -105,3 +105,46 @@ button:focus-visible,[role=button]:focus-visible,summary:focus-visible{outline:2
 .nutrition-goal.fat i{background:var(--nutrient-fat)}
 @media(max-width:650px){.nutrition-summary{gap:20px}.nutrition-summary .card{padding:22px 20px}.nutrition-summary .nutrition-goal-head{line-height:1.5}.nutrition-summary .nutrition-goal small{line-height:1.5;margin-top:8px}.nutrition-summary .nutrition-track{margin-top:12px}.nutrition-meal-list{gap:18px}.nutrition-meal{padding:22px 20px}.nutrition-food{padding:14px 0}.nutrition-food small{line-height:1.5}.nutrition-share{padding:14px;gap:7px}.nutrition-share span,.nutrition-share small{line-height:1.4}}
 
+/* Shared content rhythm: headings, explanatory copy and actions remain separate. */
+.section.card:not(details){display:grid;align-content:start;gap:18px}
+.section.card:not(details)>h3{margin:0}
+.section.card:not(details)>p{margin:0;line-height:1.65}
+.section.card:not(details)>.actions{margin-top:2px}
+.section.card:not(details)>.button{justify-self:start;min-width:min(100%,190px)}
+.section.card:not(details)>.form-grid,.section.card:not(details)>.chip-row{min-width:0}
+.section:not(.card)>.card+.hint,.section:not(.card)>.grid+.hint{margin-top:16px;line-height:1.65}
+.section:not(.card)>.actions+.hint{margin-top:14px}
+.card>.row+svg.chart{margin-top:18px}
+.card>svg.chart+h3{margin-top:22px}
+.card>svg.chart+.hint{margin-top:14px}
+.button{min-height:48px;padding:12px 18px;line-height:1.4}
+.text-button{min-height:36px;padding:8px 6px;line-height:1.45}
+.actions{row-gap:12px}
+details.section.card>summary{padding:5px 0;line-height:1.5}
+details.section.card[open]>summary{margin-bottom:20px}
+details.section.card[open]>h3{margin:20px 0 12px}
+
+.session-card{gap:18px}
+.session-card>.hint{font-size:12px;line-height:1.6}
+.session-card>.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.session-card>.actions>.button{min-width:0}
+.recommendation-card{grid-template-columns:repeat(2,minmax(0,1fr))}
+.recommendation-card>:not(.button){grid-column:1/-1}
+.recommendation-card>.button{width:100%;min-width:0;justify-self:stretch}
+.settings-page>.card:has(#draft-export){grid-template-columns:repeat(2,minmax(0,1fr))}
+.settings-page>.card:has(#draft-export)>:not(.button){grid-column:1/-1}
+.settings-page>.card:has(#draft-export)>.button{width:100%;min-width:0;justify-self:stretch;margin-top:0}
+.progress-section>.progress-grid{gap:14px}
+.progress-section>.progress-grid .card.empty{display:grid;place-items:center;min-height:112px;padding:24px;line-height:1.6}
+.progress-section>.hint{margin-top:16px;line-height:1.65}
+.progress-section>.progress-grid+.hint+.card{margin-top:18px!important}
+.progress-section:has(.progress-grid .empty)>.progress-grid+.hint+.card{display:none}
+@media(max-width:650px){
+  .section.card:not(details){gap:16px}
+  .section.card:not(details)>.button{justify-self:stretch}
+  .recommendation-card,.settings-page>.card:has(#draft-export){grid-template-columns:minmax(0,1fr)}
+  .progress-section>.progress-grid .card.empty{min-height:100px}
+}
+@media(max-width:380px){.session-card>.actions{grid-template-columns:minmax(0,1fr)}}
+.page-head>.button{flex:0 0 auto;min-width:96px;white-space:nowrap}
+
