@@ -43,6 +43,53 @@ service cloud.firestore {
           && request.resource.data.updatedAt == request.time;
       }
     }
+    match /users/{uid}/aiDrafts/{draftId} {
+      function draftShape() {
+        return request.resource.data.keys().hasOnly([
+          'id','requestId','type','status','schemaVersion','sourceModel',
+          'originalUtterance','parsedData','uncertainty','evidence',
+          'createdAt','updatedAt','finalRecordIds','reviewedAt','reviewedData'
+        ])
+          && request.resource.data.keys().hasAll([
+            'id','requestId','type','status','schemaVersion','sourceModel',
+            'originalUtterance','parsedData','uncertainty','evidence',
+            'createdAt','updatedAt'
+          ])
+          && request.resource.data.id == draftId
+          && request.resource.data.requestId == draftId
+          && request.resource.data.type in ['meal','workout','body','food','machine','exercise']
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.sourceModel is string
+          && request.resource.data.sourceModel.size() <= 100
+          && request.resource.data.originalUtterance is string
+          && request.resource.data.originalUtterance.size() <= 4000
+          && request.resource.data.parsedData is map
+          && request.resource.data.uncertainty is map
+          && request.resource.data.evidence is map
+          && request.resource.data.createdAt is timestamp
+          && request.resource.data.updatedAt is timestamp;
+      }
+      allow get, list: if owner(uid) && approved();
+      allow create: if owner(uid) && approved() && draftShape()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && !request.resource.data.keys().hasAny(['finalRecordIds','reviewedAt','reviewedData']);
+      allow update: if owner(uid) && approved() && draftShape()
+        && resource.data.status == 'pending'
+        && request.resource.data.status in ['pending','confirmed','rejected']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status','parsedData','uncertainty','evidence','updatedAt',
+          'finalRecordIds','reviewedAt','reviewedData'
+        ])
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.status == 'pending'
+          || (request.resource.data.finalRecordIds is list
+            && request.resource.data.finalRecordIds.size() <= 100
+            && request.resource.data.reviewedAt == request.time
+            && request.resource.data.reviewedData is map));
+      allow delete: if false;
+    }
     match /catalog/{kind}/items/{itemId} {
       function catalogKind() {
         return kind in ['foods','exercises','machineModels','gymLocations','gymMachines'];

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=path.join(path.dirname(fileURLToPath(import.meta.url)),'dist');
-const required=['index.html','app.js','app.css','domain.js','store.js','inbody.js','inbody-photo.js','insights.js','training.js','ai-adapter.js','sw.js','manifest.webmanifest','icon.svg','vendor/tesseract.min.js','vendor/worker.min.js','vendor/lang/kor.traineddata.gz','vendor/lang/eng.traineddata.gz','vendor/core/tesseract-core.wasm.js','vendor/core/tesseract-core.wasm'];
+const required=['index.html','app.js','app.css','domain.js','store.js','inbody.js','inbody-photo.js','insights.js','training.js','ai-adapter.js','ai-drafts.js','ai-inbox.js','sw.js','manifest.webmanifest','icon.svg','vendor/tesseract.min.js','vendor/worker.min.js','vendor/lang/kor.traineddata.gz','vendor/lang/eng.traineddata.gz','vendor/core/tesseract-core.wasm.js','vendor/core/tesseract-core.wasm'];
 for(const f of required)await fs.access(path.join(root,f));
 for(const f of (await fs.readdir(root)).filter(f=>f.endsWith('.js'))){
   const source=await fs.readFile(path.join(root,f),'utf8');

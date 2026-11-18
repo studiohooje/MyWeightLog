@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {initializeTestEnvironment, assertFails, assertSucceeds} from '@firebase/rules-unit-testing';
-import {collection,doc,getDoc,getDocs,setDoc,updateDoc,serverTimestamp} from 'firebase/firestore';
+import {collection,doc,getDoc,getDocs,setDoc,updateDoc,serverTimestamp,runTransaction} from 'firebase/firestore';
 
 const projectId='myweightlog-approval-rules-test';
 const adminUid='x65cKbgpsQVk6oj7JIDnLVFDYtN2';
@@ -45,10 +45,41 @@ test('approval gates server health records and shared catalogs', {skip:!host}, a
     await assertSucceeds(updateDoc(profile(admin,pendingUid),{
       status:'approved',reviewerUid:adminUid,reviewedAt:serverTimestamp(),updatedAt:serverTimestamp()
     }));
+    await assertSucceeds(setDoc(profile(member,memberUid),{
+      uid:memberUid,email:'approved@example.test',status:'pending',
+      consentAt:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(profile(admin,memberUid),{
+      status:'approved',reviewerUid:adminUid,reviewedAt:serverTimestamp(),updatedAt:serverTimestamp()
+    }));
     await assertSucceeds(setDoc(record(pending,pendingUid),{revision:1,payload:'{}',updatedAt:serverTimestamp()}));
     await assertSucceeds(getDoc(record(pending,pendingUid)));
     await assertFails(getDoc(record(member,pendingUid)));
     await assertFails(getDoc(record(admin,pendingUid)));
+    const draftId='draft-account-boundary';
+    const draft=(db,uid)=>doc(db,'users',uid,'aiDrafts',draftId);
+    const draftData={id:draftId,requestId:draftId,type:'meal',status:'pending',schemaVersion:1,sourceModel:'test',originalUtterance:'식사 기록',parsedData:{items:[]},uncertainty:{},evidence:{},createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    await assertSucceeds(setDoc(draft(member,memberUid),draftData));
+    await assertSucceeds(setDoc(draft(pending,pendingUid),draftData));
+    await assertSucceeds(getDoc(draft(pending,pendingUid)));
+    await assertFails(getDoc(draft(member,pendingUid)));
+    await assertFails(getDoc(draft(pending,memberUid)));
+    await assertFails(getDoc(draft(admin,pendingUid)));
+    await assertFails(setDoc(draft(pending,pendingUid),{...draftData,status:'confirmed'}));
+    await assertSucceeds(updateDoc(draft(pending,pendingUid),{status:'confirmed',reviewedData:{items:[]},finalRecordIds:['meal-1'],reviewedAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+    await assertFails(updateDoc(draft(pending,pendingUid),{status:'rejected',reviewedAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+    const transactionDraft='draft-transaction';
+    const aiRef=doc(member,'users',memberUid,'aiDrafts',transactionDraft);
+    const mealRef=doc(member,'users',memberUid,'records','meals~ai-draft-transaction-0');
+    await assertSucceeds(setDoc(aiRef,{...draftData,id:transactionDraft,requestId:transactionDraft}));
+    await assertSucceeds(runTransaction(member,async tx=>{
+      const current=await tx.get(aiRef),existing=await tx.get(mealRef);
+      assert.equal(current.data().status,'pending');assert.equal(existing.exists(),false);
+      tx.set(mealRef,{revision:1,payload:'{"id":"ai-draft-transaction-0"}',updatedAt:serverTimestamp()});
+      tx.update(aiRef,{status:'confirmed',reviewedData:{items:[]},finalRecordIds:['ai-draft-transaction-0'],reviewedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    }));
+    assert.equal((await getDoc(aiRef)).data().status,'confirmed');
+    assert.equal((await getDoc(mealRef)).exists(),true);
     await assertFails(updateDoc(profile(pending,pendingUid),{status:'approved'}));
 
     await assertSucceeds(updateDoc(profile(admin,pendingUid),{

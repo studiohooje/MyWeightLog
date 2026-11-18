@@ -10,13 +10,19 @@ export function cleanMeal(raw){
  const name=String(raw.name??'').trim();if(!name)throw Error('음식 이름을 입력해 주세요.');
  const servingQty=number(raw.servingQty)??1,servingUnit=String(raw.servingUnit||'회').trim();
  if(servingQty<=0||!servingUnit)throw Error('섭취량과 단위를 확인해 주세요.');
- const out={id:raw.id||uid(),date,slot:String(raw.slot||'식사'),mealGroupId:String(raw.mealGroupId||''),loggedAt:String(raw.loggedAt||raw.createdAt||new Date().toISOString()),name,servingQty,servingUnit,source:String(raw.source||'manual'),copyKey:String(raw.copyKey||''),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat),note:String(raw.note??'').trim(),createdAt:raw.createdAt||raw.updatedAt||new Date().toISOString(),updatedAt:raw.updatedAt||new Date().toISOString()};
+ const estimate=raw.aiEstimate&&typeof raw.aiEstimate==='object'?raw.aiEstimate:{};
+ const caloriesMin=number(estimate.caloriesMin),caloriesMax=number(estimate.caloriesMax);
+ if(caloriesMin!==null&&caloriesMin<0||caloriesMax!==null&&caloriesMax<0||caloriesMin!==null&&caloriesMax!==null&&caloriesMin>caloriesMax)throw Error('추정 칼로리 범위를 확인해 주세요.');
+ const aiEstimate={estimated:estimate.estimated===true,caloriesMin,caloriesMax,basis:String(estimate.basis||'').slice(0,160),note:String(estimate.note||'').slice(0,500)};
+ for(const key of ['carbs','protein','fat']){const min=number(estimate[`${key}Min`]),max=number(estimate[`${key}Max`]);if(min!==null&&min<0||max!==null&&max<0||min!==null&&max!==null&&min>max)throw Error('추정 탄단지 범위를 확인해 주세요.');aiEstimate[`${key}Min`]=min;aiEstimate[`${key}Max`]=max}
+ const out={id:raw.id||uid(),date,slot:String(raw.slot||'식사'),mealGroupId:String(raw.mealGroupId||''),loggedAt:String(raw.loggedAt||raw.createdAt||new Date().toISOString()),name,servingQty,servingUnit,source:String(raw.source||'manual'),copyKey:String(raw.copyKey||''),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat),aiEstimate,note:String(raw.note??'').trim(),createdAt:raw.createdAt||raw.updatedAt||new Date().toISOString(),updatedAt:raw.updatedAt||new Date().toISOString()};
  for(const k of ['calories','carbs','protein','fat'])if(out[k]!==null&&out[k]<0)throw Error(`${k} 값은 음수가 될 수 없습니다.`);return out
 }
 export function cleanFoodPreset(raw){
  const name=String(raw.name??'').trim(),servingUnit=String(raw.servingUnit||'회').trim();
  if(!name||!servingUnit)throw Error('음식 이름과 단위를 입력해 주세요.');
- const out={id:raw.id||uid(),name,servingUnit,source:String(raw.source||'manual'),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat)};
+ const servingQty=number(raw.servingQty)??1;if(servingQty<=0)throw Error('음식 기준량을 확인해 주세요.');
+ const out={id:raw.id||uid(),name,servingQty,servingUnit,source:String(raw.source||'manual'),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat)};
  for(const k of ['calories','carbs','protein','fat'])if(out[k]!==null&&out[k]<0)throw Error('영양값은 음수가 될 수 없습니다.');
  if(['calories','carbs','protein','fat'].every(k=>out[k]===null))throw Error('영양값을 하나 이상 입력해 주세요.');
  return out;
