@@ -15,3 +15,8 @@ for(const f of ['firebase-app.js','firebase-auth.js','firebase-firestore.js','fi
 
 console.log(`배포용 웹 앱 생성: ${out}`);
 await fs.cp(path.join(root,'vendor','capacitor'),path.join(out,'vendor','capacitor'),{recursive:true});
+const apk=path.join(root,'..','MWL-Beta-2.0.0-debug.apk');
+if(await fs.stat(apk).catch(()=>null)){
+ await fs.mkdir(path.join(out,'downloads'),{recursive:true});
+ await fs.copyFile(apk,path.join(out,'downloads','MWL-Beta-2.0.0-debug.apk'));
+}

@@ -6,7 +6,7 @@
 
 이번 버전은 승인된 각 사용자 계정에 Codex·Claude Code 등 로컬 MCP 도구가 **AI 검토 초안**을 직접 넣는 시험 경로를 추가합니다. 사용자는 AI 검토함에서 식단·운동·몸/인바디·개인 음식·머신·운동 종목 초안을 수정하거나 버리고 확정합니다. [AI 연결 도구](agent-bridge/README.md)와 [버전별 패치노트](releases/2.0.0.md)를 확인하세요. AI 모델 API는 앱에 연결하지 않았습니다. 사진 원본은 AI 대화에서 해석하며 Firebase에 업로드하지 않습니다. 머신 신규등록은 전체 사진과 명판 사진의 식별 근거 및 제조사·모델이 필요합니다. 친구 실계정 연결은 해당 사용자가 직접 로그인해 시험해야 합니다.
 
-웹은 [GitHub Pages](https://studiohooje.github.io/MyWeightLog/)에 게시합니다. Android APK의 버전명은 `2.0.0-beta`입니다.
+웹은 [GitHub Pages](https://studiohooje.github.io/MyWeightLog/)에 게시합니다. Android APK의 버전명은 `2.0.0-beta`이며 [설치 파일](https://studiohooje.github.io/MyWeightLog/downloads/MWL-Beta-2.0.0-debug.apk)을 제공합니다. [AI 기록 지침](MWL_AI_RECORDING_PROMPT.md)과 [사업계획서](MWL_Beta_2_0_Business_Plan.pptx)도 함께 관리합니다.
 
 ## 이전 상태 (2026-11-17)
 
