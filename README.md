@@ -2,9 +2,13 @@
 
 체중·체성분, 식단, 운동을 기록하는 개인용 로컬 베타 앱입니다. 안드로이드 프로젝트와 아이폰 홈 화면용 웹 앱(PWA)이 같은 화면 코드를 사용합니다.
 
-대표님이 확정한 제품 방향과 디자인 결정은 [제품 방향·결정 기록](PROJECT_DIRECTION_AND_DECISIONS.md)에 계속 갱신합니다. 현재 선택한 Aurora Halo(기존 10-5번)의 모션 비교 목업은 [10종 모션 랩](mockups/aurora-motion-10/README.md)에 있습니다. 목업은 실제 배포 앱에 적용된 버전이 아닙니다.
+대표님이 확정한 제품 방향과 디자인 결정은 [제품 방향·결정 기록](PROJECT_DIRECTION_AND_DECISIONS.md)에 계속 갱신합니다. 과거 디자인·모션 비교용 시안은 [10종 모션 랩](mockups/aurora-motion-10/README.md)에 보존합니다. 실제 배포 상태는 아래 최신 버전과 배포 기록을 기준으로 확인하세요.
 
-## 최신 상태 (MWL Beta 2.0.1 · 2026-11-19)
+## 최신 배포 (MWL Beta 2.1.1 · 2026-11-19)
+
+선택된 여백 조정 아이콘을 웹·PWA·아이폰 홈 화면과 Android 런처·시작 화면에 적용했다. [웹](https://studiohooje.github.io/MyWeightLog/) · [APK](https://studiohooje.github.io/MyWeightLog/downloads/MWL-Beta-2.1.1-debug.apk) · [배포 기록](releases/2.1.1.md).
+
+## AI 기록 기능 (MWL Beta 2.0.1)
 
 승인된 각 사용자 계정에 Codex·Claude Code 등 로컬 MCP 도구가 **AI 검토 초안**을 직접 넣는 시험 경로가 있습니다. 이번 패치는 검토함의 식사·운동 편집, 중복 확정 방지, 추정 범위·출처 보존, 머신 등록 요청의 전체·명판 사진 접수를 보완했습니다. [AI 연결 도구](agent-bridge/README.md)와 [패치노트](releases/2.0.1.md)를 확인하세요. AI 모델 API는 앱에 연결하지 않았습니다. AI 대화의 사진 원본은 서버로 전달하지 않으며, 앱 내 머신 등록 요청에 첨부한 사진만 압축해 제한된 요청 문서에 보관합니다. 친구 실계정 연결은 해당 사용자가 직접 로그인해 시험해야 합니다.
 
@@ -13,6 +17,12 @@
 ## 현재 디자인 (MWL Beta 2.1.0)
 
 선택된 Aurora Halo(10-5번)과 Spring Touch를 웹/PWA·Android 공통 소스에 적용했다. 홈 빠른 기록, 실제 기록 기반 요약, SUIT 글꼴과 화면 모션을 포함한다. 빌드·배포 결과는 [2.1.0 배포 기록](releases/2.1.0.md)을 확인한다.
+
+## 아이콘 개정 (MWL Beta 2.1.1)
+
+대표님이 확정한 원형 프레임·세 줄기 심볼을 웹 favicon, PWA·아이폰 홈 화면, Android 런처·시작 화면에 통일했다. 앱의 화면 구조와 기록 기능은 2.1.0과 같다. 최신 배포와 검증은 [2.1.1 배포 기록](releases/2.1.1.md)을 확인한다.
+
+현재 사업계획서: [2026년 11월 사업계획서 PPT](MyWeightLog_Business_Plan_2026-11.pptx) · [발표 노트](BUSINESS_PLAN_PRESENTER_NOTES_2026-11.md). 이번 검토에서 확인한 앱 후속 과제는 [감사 기록](MWL_BETA_2_1_AURORA_AUDIT.md)에 따로 적었다.
 
 ## 이전 상태 (2026-11-17)
 
