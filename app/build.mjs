@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
+import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';import {packageApk} from './package-apk.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),out=path.join(root,'dist');await fs.rm(out,{recursive:true,force:true});await fs.mkdir(path.join(out,'vendor','core'),{recursive:true});await fs.mkdir(path.join(out,'vendor','lang'),{recursive:true});
 for(const f of ['native-auth.js','storage-scope.js','firebase-config.js','cloud-model.js','cloud-sync.js','cloud-ui.js','catalog-cloud.js','food-provider.js','food-catalog.js','index.html','app.css','quick-entry.css','aurora-theme.css','aurora-motion.css','brand-icons.js','app.js','timeline-view.js','food-view.js','quick-entry.js','domain.js','store.js','inbody.js','inbody-photo.js','insights.js','training.js','ai-adapter.js','ai-drafts.js','ai-inbox.js','backup.js','session.js','meal-batch.js','model-features.js','exercise-ui.js','atlas-art.js','profile-forms.js','manifest.webmanifest','icon.svg','sw.js'])await fs.copyFile(path.join(root,f),path.join(out,f));
 for(const f of ['icon-192.png','icon-512.png','apple-touch-icon.png'])await fs.copyFile(path.join(root,f),path.join(out,f));
@@ -22,6 +22,10 @@ const apk=path.join(root,'..',apkName);
 if(await fs.stat(apk).catch(()=>null)){
  await fs.mkdir(path.join(out,'downloads'),{recursive:true});
  await fs.copyFile(apk,path.join(out,'downloads',apkName));
+ const zipName=`MWL-Beta-${version}-debug.zip`;
+ const zip=path.join(root,'..',zipName);
+ await packageApk(apk,zip);
+ await fs.copyFile(zip,path.join(out,'downloads',zipName));
 }
 
 await fs.cp(path.join(root,'fonts'),path.join(out,'fonts'),{recursive:true});

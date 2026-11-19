@@ -6,7 +6,7 @@
 
 ## 최신 배포 (MWL Beta 2.1.1 · 2026-11-19)
 
-선택된 여백 조정 아이콘을 웹·PWA·아이폰 홈 화면과 Android 런처·시작 화면에 적용했다. [웹](https://studiohooje.github.io/MyWeightLog/) · [APK](https://studiohooje.github.io/MyWeightLog/downloads/MWL-Beta-2.1.1-debug.apk) · [배포 기록](releases/2.1.1.md).
+선택된 여백 조정 아이콘을 웹·PWA·아이폰 홈 화면과 Android 런처·시작 화면에 적용했다. [웹](https://studiohooje.github.io/MyWeightLog/) · [APK](https://studiohooje.github.io/MyWeightLog/downloads/MWL-Beta-2.1.1-debug.apk) · [APK ZIP](https://studiohooje.github.io/MyWeightLog/downloads/MWL-Beta-2.1.1-debug.zip) · [배포 기록](releases/2.1.1.md). ZIP은 압축 해제 후 APK를 설치한다.
 
 ## AI 기록 기능 (MWL Beta 2.0.1)
 
@@ -60,6 +60,8 @@ npm run serve
 브라우저에서 `http://localhost:4173`을 엽니다. `dist`에는 OCR 라이브러리와 한국어·영어 인식 데이터가 함께 들어 있습니다. 정적 파일을 `file://`로 직접 열면 JavaScript 모듈과 서비스 워커가 정상 작동하지 않을 수 있습니다.
 
 안드로이드 프로젝트를 갱신하려면 `npm run build` 다음에 `npx cap sync android`를 실행합니다. APK 생성에는 JDK 21·Android SDK가 필요합니다. 이 작업 공간에는 호환 JDK 21을 `jdk21/`에 두었습니다. `JAVA_HOME`을 그 폴더로, `ANDROID_HOME`을 설치된 Android SDK로 설정한 뒤 `app/android` 폴더의 `gradlew.bat assembleDebug`로 디버그 APK를 빌드합니다. Android Studio Rabbit 2에 포함된 JBR 25는 현재 프로젝트의 Gradle 8.14.3과 호환되지 않았습니다.
+
+매 버전의 APK를 프로젝트 루트에 `MWL-Beta-<버전>-debug.apk`로 복사한 후 `npm run build`를 다시 실행하면 동일한 APK가 `MWL-Beta-<버전>-debug.zip`으로 묶이고 웹 배포용 `dist/downloads/`에 APK와 ZIP이 함께 생성됩니다.
 
 ## 확정 범위
 
