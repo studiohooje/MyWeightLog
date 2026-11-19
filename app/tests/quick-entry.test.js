@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {emptyDB,cleanMeal,cleanMachine,mealTotals} from '../domain.js';
 import {EXERCISE_CATALOG} from '../catalog.js';
 import {emptyQuickMeal,emptyQuickWorkout,quickMealHTML,quickMealRecords,quickWorkoutHTML,quickWorkoutRecord} from '../quick-entry.js';
+import {toFoodPreset} from '../nutrition.js';
 
 const date='2026-11-13';
 test('빠른 식단은 실제 사용자 음식 두 개를 각각 계산하고 목표·누적 막대를 보인다',()=>{
@@ -11,6 +12,14 @@ test('빠른 식단은 실제 사용자 음식 두 개를 각각 계산하고 �
  const html=quickMealHTML(db,state),records=quickMealRecords(state),total=mealTotals(records);
  assert.match(html,/최근 음식/);assert.match(html,/nutrition-goal kcal/);assert.match(html,/nutrition-goal protein/);assert.match(html,/이번 식사 ÷ 현재 하루 누적/);
  assert.equal(records.length,2);assert.equal(records[0].servingQty,210);assert.equal(records[1].servingQty,150);assert.equal(new Set(records.map(x=>x.mealGroupId)).size,1);assert.equal(total.calories,511.5);
+});
+test('추정 음식을 다른 중량으로 재사용하면 칼로리와 추정 범위도 함께 환산한다',()=>{
+ const previous=cleanMeal({date:'2026-11-12',name:'사진 속 밥',servingQty:200,servingUnit:'g',calories:300,carbs:64,protein:5,fat:2,aiEstimate:{estimated:true,caloriesMin:240,caloriesMax:360,carbsMin:50,carbsMax:78,basis:'사진 추정'}});
+ const preset=toFoodPreset(previous);
+ assert.equal(preset.calories,150);assert.equal(preset.aiEstimate.caloriesMin,120);
+ const state=emptyQuickMeal(date,'13:35');state.rows=[{...preset,servingQty:300}];
+ const [record]=quickMealRecords(state);
+ assert.equal(record.calories,450);assert.equal(record.aiEstimate.caloriesMin,360);assert.equal(record.aiEstimate.caloriesMax,540);assert.equal(record.aiEstimate.carbsMin,75);
 });
 
 test('빠른 운동은 지점별 머신을 보여주고 실제 완료 세트만 한 운동으로 저장한다',()=>{

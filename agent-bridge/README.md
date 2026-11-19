@@ -1,4 +1,4 @@
-# 마웨로그 AI 연결 도구 · Beta 2.0.0
+# 마웨로그 AI 연결 도구 · Beta 2.0.1
 
 Codex·Claude Code 등 **로컬 MCP 도구를 실행할 수 있는 AI**가 사용자의 마웨로그 계정에 직접 **검토함 초안**을 쓰는 공통 연결부입니다. AI 모델 API는 사용하지 않습니다. 최종 기록 확정은 마웨로그 앱의 사용자가 합니다.
 
@@ -18,7 +18,7 @@ args: C:\VibeCoding Claude\MyWeightLog\agent-bridge\mcp.mjs
 ## 도구
 
 - `mwl_connection_status`: 연결된 UID와 만료 시각 확인.
-- `mwl_search_records`: 본인 음식·머신·운동 및 공개 도감 검색. 새 항목 생성 전 호출.
+- `mwl_search_records`: 본인 음식·머신 별칭·헬스장·운동 및 공개 도감 검색. 기존 항목의 ID와 재사용 가능한 필드를 반환한다. `incomplete:true`면 검색 범위가 일부 잘렸으므로 중복 없음으로 결론 내리지 않는다. 새 항목 생성 전 호출.
 - `mwl_create_draft`: `meal`, `workout`, `body`, `food`, `machine`, `exercise` 초안 생성. 동일 `requestId` 재시도는 동일 초안으로 처리.
 - `mwl_list_drafts`: 본인의 검토함 상태 확인.
 

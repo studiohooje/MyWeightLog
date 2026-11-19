@@ -56,6 +56,17 @@ test('approval gates server health records and shared catalogs', {skip:!host}, a
     await assertSucceeds(getDoc(record(pending,pendingUid)));
     await assertFails(getDoc(record(member,pendingUid)));
     await assertFails(getDoc(record(admin,pendingUid)));
+    const requestId='machine-photo-request';
+    const requestRef=(db)=>doc(db,'catalogRequests',requestId);
+    const image='data:image/jpeg;base64,AA==';
+    const requestData={type:'machine',mode:'photo',name:'레그프레스',manufacturer:'예시 제조사',model:'LP-1',gymName:'예시 지점',targetIds:[],note:'',servingQty:null,servingUnit:'',calories:null,carbs:null,protein:null,fat:null,requesterUid:memberUid,photoPath:'',wholePhotoDataUrl:image,nameplatePhotoDataUrl:image,status:'pending',adminNote:'',createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    await assertFails(setDoc(requestRef(member),{...requestData,nameplatePhotoDataUrl:''}));
+    await assertFails(setDoc(requestRef(member),{...requestData,nameplatePhotoDataUrl:'data:text/html;base64,AA=='}));
+    await assertSucceeds(setDoc(requestRef(member),requestData));
+    await assertSucceeds(getDoc(requestRef(member)));
+    await assertSucceeds(getDoc(requestRef(admin)));
+    await assertFails(getDoc(requestRef(pending)));
+    await assertFails(getDoc(requestRef(other)));
     const draftId='draft-account-boundary';
     const draft=(db,uid)=>doc(db,'users',uid,'aiDrafts',draftId);
     const draftData={id:draftId,requestId:draftId,type:'meal',status:'pending',schemaVersion:1,sourceModel:'test',originalUtterance:'식사 기록',parsedData:{items:[]},uncertainty:{},evidence:{},createdAt:serverTimestamp(),updatedAt:serverTimestamp()};

@@ -26,6 +26,18 @@ test('새 음식과 운동 초안을 구분한다',()=>{
  assert.equal(validateDraft({type:'food',requestId:'f1',originalUtterance:'제로핵',parsedData:{name:'제로핵',servingUnit:'개',calories:200}}).type,'food');
  assert.equal(validateDraft({type:'exercise',requestId:'e1',originalUtterance:'새 운동',parsedData:{name:'새 운동',part:'등'}}).type,'exercise');
 });
+test('검색은 개인 머신 별칭·지점과 기록된 운동 종목을 찾고 재사용 ID를 돌려준다',async()=>{
+ const bridge=new FirestoreBridge();bridge.setSession({uid:'member',idToken:'test-token',expiresAt:new Date(Date.now()+3600000).toISOString()});
+ bridge.listCollection=async()=>[
+  {documentId:'machines~machine-1',payload:JSON.stringify({id:'machine-1',name:'우리 헬스장 레그프레스',aliases:['빨간 레프'],manufacturer:'Brand',model:'LP-1',location:'안산점',exerciseId:'leg-press',unit:'lb'})},
+  {documentId:'workouts~workout-1',payload:JSON.stringify({id:'workout-1',title:'하체',exercises:[{name:'불가리안 스플릿 스쿼트'}]})}
+ ];
+ bridge.listPublishedCatalog=async()=>[];
+ const machine=await bridge.searchRecords({query:'빨간 레프',kind:'machines'});
+ assert.equal(machine.results[0].id,'machine-1');assert.equal(machine.results[0].exerciseId,'leg-press');assert.equal(machine.results[0].location,'안산점');
+ const exercise=await bridge.searchRecords({query:'불가리안',kind:'workouts'});
+ assert.deepEqual(exercise.results[0].exerciseNames,['불가리안 스플릿 스쿼트']);
+});
 test('Firestore REST 값 인코딩과 디코딩',()=>{
  const input={name:'제로핵',calories:125.5,estimated:true,items:[{grams:100}]};
  assert.deepEqual(fromFirestore(firestoreValue(input)),input);

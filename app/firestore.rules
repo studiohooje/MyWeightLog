@@ -117,12 +117,14 @@ service cloud.firestore {
         return request.resource.data.keys().hasOnly([
             'type','mode','name','manufacturer','model','gymName','targetIds','note',
             'servingQty','servingUnit','calories','carbs','protein','fat',
-            'requesterUid','photoPath','status','adminNote','createdAt','updatedAt'
+            'requesterUid','photoPath','wholePhotoDataUrl','nameplatePhotoDataUrl',
+            'status','adminNote','createdAt','updatedAt'
           ])
           && request.resource.data.keys().hasAll([
             'type','mode','name','manufacturer','model','gymName','targetIds','note',
             'servingQty','servingUnit','calories','carbs','protein','fat',
-            'requesterUid','photoPath','status','adminNote','createdAt','updatedAt'
+            'requesterUid','photoPath','wholePhotoDataUrl','nameplatePhotoDataUrl',
+            'status','adminNote','createdAt','updatedAt'
           ])
           && request.resource.data.requesterUid == request.auth.uid
           && request.resource.data.type in ['food','exercise','machine']
@@ -141,8 +143,16 @@ service cloud.firestore {
           && (request.resource.data.fat == null || (request.resource.data.fat is number && request.resource.data.fat >= 0))
           && request.resource.data.targetIds is list && request.resource.data.targetIds.size() <= 24
           && request.resource.data.photoPath is string
-          && (request.resource.data.photoPath == '' || request.resource.data.photoPath == 'catalogRequests/' + request.auth.uid + '/' + requestId + '/photo')
-          && (request.resource.data.mode != 'photo' || request.resource.data.photoPath != '')
+          && request.resource.data.photoPath == ''
+          && request.resource.data.wholePhotoDataUrl is string
+          && request.resource.data.nameplatePhotoDataUrl is string
+          && request.resource.data.wholePhotoDataUrl.size() <= 180000
+          && request.resource.data.nameplatePhotoDataUrl.size() <= 180000
+          && (request.resource.data.mode == 'manual'
+            ? (request.resource.data.wholePhotoDataUrl == '' && request.resource.data.nameplatePhotoDataUrl == '')
+            : (request.resource.data.type == 'machine'
+              && request.resource.data.wholePhotoDataUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$')
+              && request.resource.data.nameplatePhotoDataUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$')))
           && request.resource.data.status == 'pending'
           && request.resource.data.adminNote == ''
           && request.resource.data.createdAt == request.time

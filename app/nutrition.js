@@ -7,10 +7,20 @@ export function scaleNutrition(perServing,servingQty=1){
  const q=number(servingQty);if(q===null||q<=0)throw Error('섭취량은 0보다 커야 합니다.');
  return Object.fromEntries(NUTRIENT_KEYS.map(k=>{const n=number(perServing?.[k]);if(n!==null&&n<0)throw Error('영양값은 음수가 될 수 없습니다.');return [k,n===null?null:round(n*q)]}));
 }
+export function scaleEstimate(estimate,servingQty=1){
+ if(!estimate?.estimated)return estimate||null;
+ const q=number(servingQty);if(q===null||q<=0)throw Error('추정 영양값의 양을 확인해 주세요.');
+ const out={...estimate};
+ for(const key of ['calories','carbs','protein','fat'])for(const edge of ['Min','Max']){
+  const field=`${key}${edge}`,n=number(estimate[field]);
+  out[field]=n===null?null:round(n*q,1);
+ }
+ return out;
+}
 export function toFoodPreset(meal){
  const q=number(meal?.servingQty)??1;if(q<=0)throw Error('섭취량을 확인해 주세요.');
  const factor=meal.servingUnit==='g'?q/100:q;
- return {name:String(meal.name||'').trim(),servingUnit:String(meal.servingUnit||'회'),...Object.fromEntries(NUTRIENT_KEYS.map(k=>[k,meal[k]==null?null:round(meal[k]/factor)]))};
+ return {name:String(meal.name||'').trim(),servingUnit:String(meal.servingUnit||'회'),aiEstimate:scaleEstimate(meal.aiEstimate,1/factor),aiEvidence:meal.aiEvidence||null,...Object.fromEntries(NUTRIENT_KEYS.map(k=>[k,meal[k]==null?null:round(meal[k]/factor)]))};
 }
 export function recentFoods(meals,limit=12){
  const seen=new Set(),result=[];

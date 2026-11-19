@@ -1,5 +1,5 @@
 import {mealTotals,cleanMeal,cleanWorkout,uid} from './domain.js';
-import {scaleNutrition,recentFoods} from './nutrition.js';
+import {scaleNutrition,scaleEstimate,recentFoods} from './nutrition.js';
 import {muscleMapHTML,machineIconHTML,anatomySvg,MUSCLE_LABELS} from './exercise-ui.js';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,7 +13,7 @@ export const emptyQuickMeal=(date,time)=>({date,time,rows:[],tab:'recent',query:
 export const emptyQuickWorkout=(date,gyms=[])=>({date,gymName:gyms[0]||'',title:'',query:'',part:'전체',kind:'전체',exerciseId:'',machineId:'',weight:0,reps:10,unit:'kg',completedAt:quickTime(),sets:[],editIndex:-1,workoutId:null,showAtlas:false});
 export function quickFoodCandidates(db){const result=[],seen=new Set(),preferred=new Map((db.foods||[]).map(item=>[foodKey(item),item]));for(const item of [...recentFoods(db.meals||[],20),...(db.foods||[])]){const key=foodKey(item);if(seen.has(key))continue;seen.add(key);result.push(preferred.get(key)||item)}return result}
 export function quickMealTotals(rows){return mealTotals(rows.map(row=>foodValues(row)))}
-export function quickMealRecords(state){if(!state.rows.length)throw Error('음식을 하나 이상 골라 주세요.');const groupId=uid(),loggedAt=new Date(`${state.date}T${state.time}:00`).toISOString();if(!Number.isFinite(new Date(loggedAt).getTime()))throw Error('식사 시각을 확인해 주세요.');return state.rows.map(row=>cleanMeal({...row,...foodValues(row),id:uid(),date:state.date,slot:'식사',mealGroupId:groupId,loggedAt}))}
+export function quickMealRecords(state){if(!state.rows.length)throw Error('음식을 하나 이상 골라 주세요.');const groupId=uid(),loggedAt=new Date(`${state.date}T${state.time}:00`).toISOString();if(!Number.isFinite(new Date(loggedAt).getTime()))throw Error('식사 시각을 확인해 주세요.');return state.rows.map(row=>cleanMeal({...row,...foodValues(row),aiEstimate:scaleEstimate(row.aiEstimate,factor(row)),id:uid(),date:state.date,slot:'식사',mealGroupId:groupId,loggedAt}))}
 const goal=(key,label,actual,target,unit)=>{const pct=target>0?actual/target*100:0,over=Math.max(actual-target,0);return `<div class="nutrition-goal ${key}"><div class="nutrition-goal-head"><strong>${label}</strong><span>${fmt(actual,1)} / ${fmt(target,1)} ${unit}</span></div><div class="nutrition-track"><i style="width:${Math.min(100,pct)}%"></i>${over?`<b style="width:${Math.min(30,pct-100)}%"></b>`:''}</div><small>${target<=0?'목표 미설정':over?`${fmt(over,1)} ${unit} 초과`:`${fmt(target-actual,1)} ${unit} 남음`}</small></div>`};
 export function quickMealHTML(db,s){
  const candidates=quickFoodCandidates(db),query=s.query.trim().toLocaleLowerCase('ko'),visible=candidates.filter(x=>!query||x.name.toLocaleLowerCase('ko').includes(query)),day=mealTotals([...(db.meals||[]).filter(x=>x.date===s.date),...s.rows.map(x=>foodValues(x))]),current=quickMealTotals(s.rows),settings=db.settings||{};

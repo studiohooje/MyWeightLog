@@ -53,7 +53,7 @@ createInterface({input:process.stdin,crlfDelay:Infinity}).on('line',async line=>
  const id=msg.id;
  try{
   if(msg.method==='notifications/initialized')return;
-  if(msg.method==='initialize'){if(id!==undefined)send({jsonrpc:'2.0',id,result:{protocolVersion:protocol,capabilities:{tools:{listChanged:false}},serverInfo:{name:'myweightlog-agent-bridge',version:'2.0.0-beta'}}});return}
+  if(msg.method==='initialize'){if(id!==undefined)send({jsonrpc:'2.0',id,result:{protocolVersion:protocol,capabilities:{tools:{listChanged:false}},serverInfo:{name:'myweightlog-agent-bridge',version:'2.0.1-beta'}}});return}
   if(msg.method==='tools/list'){if(id!==undefined)send({jsonrpc:'2.0',id,result:{tools:TOOLS}});return}
   if(msg.method==='tools/call'){
    const name=msg.params?.name;if(!Object.hasOwn(handlers,name))throw Error('지원하지 않는 도구입니다.');

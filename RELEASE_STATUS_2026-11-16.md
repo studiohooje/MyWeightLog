@@ -8,6 +8,7 @@
 - Spark 요금제를 유지했다. Firebase Storage 사진 업로드는 비활성화했고 문자 기반 음식·운동·머신 등록 요청만 받는다. 사진 업로드 코드와 Storage 규칙은 Blaze 결정 후 별도 검증·활성화해야 한다.
 - GitHub Pages: https://studiohooje.github.io/MyWeightLog/ (GitHub Actions 빌드·배포 성공).
 - Android 디버그 APK: `MyWeightLog-1.6-beta-approval-debug.apk`; Play 스토어 출시용 서명 빌드가 아니다.
+- 최종 웹 커밋: `78e73bf` (GitHub Actions 배포 성공). 최종 APK SHA-256: `75CFB8346668E237544D1A856AC603A40323C7D7638B43C3D83361159A07C3DE`.
 
 ## 검증
 

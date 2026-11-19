@@ -150,6 +150,8 @@ details.section.card[open]>h3{margin:20px 0 12px}
 
 /* Beta 2.0: AI review stays readable on desktop, mobile web and Android. */
 .ai-draft-list{display:grid;gap:24px;margin:24px 0 32px}
+.page-head+.alert{margin:24px 0}
+.alert+.card.empty{margin-top:24px}
 .ai-draft{display:grid;gap:22px;padding:28px}
 .ai-draft-head{display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}
 .ai-draft-head h3{margin:8px 0 0;line-height:1.35}
@@ -160,10 +162,15 @@ details.section.card[open]>h3{margin:20px 0 12px}
 .ai-item legend{padding:0 8px;font-weight:700}
 .ai-duplicate{margin:0;padding:14px 16px;background:#3b2d1d;border:1px solid #a4713c;border-radius:10px;line-height:1.6}
 .ai-set{padding-top:14px;border-top:1px solid var(--line)}
+.ai-sets{display:grid;gap:14px;min-width:0}
+.ai-estimate-edit{padding:14px;border:1px solid var(--line);border-radius:12px;min-width:0}
+.ai-estimate-edit>.form-grid{margin:12px 0}
 .ai-estimate,.nutrition-estimate{color:#ead96b}
 .ai-estimate summary,.nutrition-estimate summary{cursor:pointer;line-height:1.5;word-break:keep-all;overflow-wrap:break-word}
 .ai-estimate p{margin:8px 0 0;color:var(--muted);line-height:1.55}
 .nutrition-estimate small{display:block;max-width:250px;margin-top:8px;color:var(--muted);line-height:1.5}
+.nutrition-evidence{display:block;margin-top:7px;color:var(--muted);line-height:1.5;word-break:keep-all;overflow-wrap:break-word}
+.nutrition-evidence a{color:var(--ice);text-decoration:underline;text-underline-offset:2px}
 .ai-review-form>.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .ai-review-form>.actions>.button{min-width:0}
 @media(max-width:650px){.ai-draft{padding:20px;gap:18px}.ai-item{padding:16px}.ai-review-form>.actions{grid-template-columns:minmax(0,1fr)}}

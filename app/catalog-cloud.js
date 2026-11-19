@@ -55,9 +55,8 @@ async function sdk(){
  if(!sdkPromise)sdkPromise=Promise.all([
   import('./vendor/firebase/firebase-app.js'),
   import('./vendor/firebase/firebase-auth.js'),
-  import('./vendor/firebase/firebase-firestore.js'),
-  import('./vendor/firebase/firebase-storage.js')
- ]).then(([app,auth,db,storage])=>({app,auth,db,storage})).catch(error=>{sdkPromise=null;throw error});
+  import('./vendor/firebase/firebase-firestore.js')
+ ]).then(([app,auth,db])=>({app,auth,db})).catch(error=>{sdkPromise=null;throw error});
  return sdkPromise;
 }
 async function context(){
@@ -99,26 +98,31 @@ export async function saveSharedCatalogItem(kind,input){
  return item.id;
 }
 
-export async function submitCatalogRequest(input,photoFile){
+export async function compressRequestPhoto(file){
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size===0||file.size>10*1024*1024)throw Error('10MB 이하 JPEG·PNG·WebP 사진을 선택해 주세요.');
+ if(typeof createImageBitmap!=='function'||typeof document==='undefined')throw Error('이 브라우저에서 사진 압축을 지원하지 않습니다. 다른 브라우저에서 다시 시도해 주세요.');
+ const bitmap=await createImageBitmap(file);
+ try{
+  for(const size of [640,560,480,400,320]){
+   const ratio=Math.min(1,size/Math.max(bitmap.width,bitmap.height));
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
+   canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+   for(const quality of [.7,.55,.4]){const data=canvas.toDataURL('image/jpeg',quality);if(data.length<=180000)return data}
+  }
+ }finally{bitmap.close()}
+ throw Error('사진을 충분히 줄일 수 없습니다. 다른 사진을 선택해 주세요.');
+}
+
+export async function submitCatalogRequest(input,photos={}){
  const request=validateCatalogRequest(input),ctx=await context();
- if(request.mode==='photo'||photoFile)throw Error('사진 등록 요청은 서버 사진 저장 준비 후 사용할 수 있습니다. 지금은 직접 입력으로 요청해 주세요.');
- if(request.mode==='photo'&&!photoFile)throw Error('사진 요청에는 머신 사진을 첨부해 주세요.');
- if(photoFile&&(!['image/jpeg','image/png','image/webp'].includes(photoFile.type)||photoFile.size>5*1024*1024||photoFile.size===0))throw Error('5MB 이하 JPEG·PNG·WebP 사진을 선택해 주세요.');
+ if(request.mode==='photo'&&request.type!=='machine')throw Error('사진 등록 요청은 머신에만 사용할 수 있습니다.');
+ if(request.mode==='photo'&&(!photos?.whole||!photos?.nameplate))throw Error('머신 전체 사진과 명판 사진 두 장을 선택해 주세요.');
+ const wholePhotoDataUrl=request.mode==='photo'?await compressRequestPhoto(photos.whole):'';
+ const nameplatePhotoDataUrl=request.mode==='photo'?await compressRequestPhoto(photos.nameplate):'';
  const id=globalThis.crypto?.randomUUID?.()??`request-${Date.now()}`;
  const ref=ctx.db.doc(ctx.firestore,'catalogRequests',id);
- let photoRef=null,photoPath='';
- try{
-  if(photoFile){
-   photoPath=`catalogRequests/${ctx.user.uid}/${id}/photo`;
-   photoRef=ctx.storage.ref(ctx.storage.getStorage(ctx.app),photoPath);
-   await ctx.storage.uploadBytes(photoRef,photoFile,{contentType:photoFile.type});
-  }
-  await ctx.db.setDoc(ref,{...request,requesterUid:ctx.user.uid,photoPath,status:'pending',adminNote:'',createdAt:ctx.db.serverTimestamp(),updatedAt:ctx.db.serverTimestamp()});
-  return id;
- }catch(error){
-  if(photoRef)try{await ctx.storage.deleteObject(photoRef)}catch{}
-  throw error;
- }
+ await ctx.db.setDoc(ref,{...request,requesterUid:ctx.user.uid,photoPath:'',wholePhotoDataUrl,nameplatePhotoDataUrl,status:'pending',adminNote:'',createdAt:ctx.db.serverTimestamp(),updatedAt:ctx.db.serverTimestamp()});
+ return id;
 }
 
 export async function listCatalogRequests({admin=false}={}){
@@ -139,6 +143,10 @@ export async function reviewCatalogRequest(id,{status,note=''}){
 
 export async function catalogRequestPhoto(path){
  const ctx=await context();
- if(!path||!/^catalogRequests\/[^/]+\/[^/]+\/photo$/.test(path))throw Error('사진 경로를 확인해 주세요.');
- return ctx.storage.getDownloadURL(ctx.storage.ref(ctx.storage.getStorage(ctx.app),path));
+ if(!stableId(path))throw Error('사진 요청 ID를 확인해 주세요.');
+ const snapshot=await ctx.db.getDocFromServer(ctx.db.doc(ctx.firestore,'catalogRequests',path));
+ if(!snapshot.exists())throw Error('사진 요청을 찾지 못했습니다.');
+ const item=snapshot.data();
+ if(!isCatalogAdmin(ctx.user)&&item.requesterUid!==ctx.user.uid)throw Error('내 사진 요청만 볼 수 있습니다.');
+ return {whole:item.wholePhotoDataUrl||'',nameplate:item.nameplatePhotoDataUrl||''};
 }

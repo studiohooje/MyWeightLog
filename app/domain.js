@@ -4,6 +4,7 @@ export const uid=()=>globalThis.crypto?.randomUUID?.()??`id-${Date.now()}-${Math
 export const number=(v)=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)?n:null};
 export const validDate=(s)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(`${s}T12:00:00`);return !Number.isNaN(d.getTime())&&`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`===s};
 export const round=(n,p=1)=>Math.round((n+Number.EPSILON)*10**p)/10**p;
+const cleanAIEvidence=raw=>{if(!raw||typeof raw!=='object')return null;const source=String(raw.source||'').slice(0,160),sourceUrl=String(raw.sourceUrl||raw.url||'').slice(0,600),servingBasis=String(raw.servingBasis||'').slice(0,160),note=String(raw.note||'').slice(0,500);return source||sourceUrl||servingBasis||note?{source,sourceUrl,servingBasis,note}:null};
 export function cleanBody(raw){const date=String(raw.date??'').trim();if(!validDate(date))throw Error('측정일을 확인해 주세요.');const out={id:raw.id||uid(),date,weight:number(raw.weight),bodyFatPct:number(raw.bodyFatPct),skeletalMuscle:number(raw.skeletalMuscle),waistCm:number(raw.waistCm),bodyFatMass:number(raw.bodyFatMass),bmi:number(raw.bmi),score:number(raw.score),visceralFatLevel:number(raw.visceralFatLevel),bmr:number(raw.bmr),note:String(raw.note??'').trim(),source:String(raw.source??'manual'),createdAt:raw.createdAt||raw.updatedAt||new Date().toISOString(),updatedAt:raw.updatedAt||new Date().toISOString()};for(const k of ['weight','bodyFatPct','skeletalMuscle','waistCm','bodyFatMass','bmi','score','visceralFatLevel','bmr'])if(out[k]!==null&&out[k]<0)throw Error(`${k} 값은 음수가 될 수 없습니다.`);if(out.bodyFatPct!==null&&out.bodyFatPct>100)throw Error('체지방률은 100% 이하여야 합니다.');if(out.weight===null&&out.bodyFatPct===null&&out.skeletalMuscle===null&&out.waistCm===null)throw Error('체중, 체지방률, 골격근량, 허리둘레 중 하나를 입력해 주세요.');return out}
 export function cleanMeal(raw){
  const date=String(raw.date??'');if(!validDate(date))throw Error('식사 날짜를 확인해 주세요.');
@@ -15,7 +16,7 @@ export function cleanMeal(raw){
  if(caloriesMin!==null&&caloriesMin<0||caloriesMax!==null&&caloriesMax<0||caloriesMin!==null&&caloriesMax!==null&&caloriesMin>caloriesMax)throw Error('추정 칼로리 범위를 확인해 주세요.');
  const aiEstimate={estimated:estimate.estimated===true,caloriesMin,caloriesMax,basis:String(estimate.basis||'').slice(0,160),note:String(estimate.note||'').slice(0,500)};
  for(const key of ['carbs','protein','fat']){const min=number(estimate[`${key}Min`]),max=number(estimate[`${key}Max`]);if(min!==null&&min<0||max!==null&&max<0||min!==null&&max!==null&&min>max)throw Error('추정 탄단지 범위를 확인해 주세요.');aiEstimate[`${key}Min`]=min;aiEstimate[`${key}Max`]=max}
- const out={id:raw.id||uid(),date,slot:String(raw.slot||'식사'),mealGroupId:String(raw.mealGroupId||''),loggedAt:String(raw.loggedAt||raw.createdAt||new Date().toISOString()),name,servingQty,servingUnit,source:String(raw.source||'manual'),copyKey:String(raw.copyKey||''),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat),aiEstimate,note:String(raw.note??'').trim(),createdAt:raw.createdAt||raw.updatedAt||new Date().toISOString(),updatedAt:raw.updatedAt||new Date().toISOString()};
+ const out={id:raw.id||uid(),date,slot:String(raw.slot||'식사'),mealGroupId:String(raw.mealGroupId||''),loggedAt:String(raw.loggedAt||raw.createdAt||new Date().toISOString()),name,servingQty,servingUnit,source:String(raw.source||'manual'),copyKey:String(raw.copyKey||''),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat),aiEstimate,aiEvidence:cleanAIEvidence(raw.aiEvidence),note:String(raw.note??'').trim(),createdAt:raw.createdAt||raw.updatedAt||new Date().toISOString(),updatedAt:raw.updatedAt||new Date().toISOString()};
  for(const k of ['calories','carbs','protein','fat'])if(out[k]!==null&&out[k]<0)throw Error(`${k} 값은 음수가 될 수 없습니다.`);return out
 }
 export function cleanFoodPreset(raw){
@@ -23,6 +24,8 @@ export function cleanFoodPreset(raw){
  if(!name||!servingUnit)throw Error('음식 이름과 단위를 입력해 주세요.');
  const servingQty=number(raw.servingQty)??1;if(servingQty<=0)throw Error('음식 기준량을 확인해 주세요.');
  const out={id:raw.id||uid(),name,servingQty,servingUnit,source:String(raw.source||'manual'),calories:number(raw.calories),carbs:number(raw.carbs),protein:number(raw.protein),fat:number(raw.fat)};
+ out.aiEvidence=cleanAIEvidence(raw.aiEvidence);
+ if(raw.aiEstimate?.estimated===true){const estimate={estimated:true,basis:String(raw.aiEstimate.basis||'').slice(0,160),note:String(raw.aiEstimate.note||'').slice(0,500)};for(const key of ['calories','carbs','protein','fat']){const min=number(raw.aiEstimate[`${key}Min`]),max=number(raw.aiEstimate[`${key}Max`]);if(min!==null&&min<0||max!==null&&max<0||min!==null&&max!==null&&min>max)throw Error(`추정 ${key} 범위를 확인해 주세요.`);estimate[`${key}Min`]=min;estimate[`${key}Max`]=max}out.aiEstimate=estimate}
  for(const k of ['calories','carbs','protein','fat'])if(out[k]!==null&&out[k]<0)throw Error('영양값은 음수가 될 수 없습니다.');
  if(['calories','carbs','protein','fat'].every(k=>out[k]===null))throw Error('영양값을 하나 이상 입력해 주세요.');
  return out;
@@ -64,7 +67,7 @@ export function cleanMachine(raw){
  const name=String(raw.name||raw.model||'이름 없는 머신').trim();
  const unit=raw.unit||'kg';if(!['kg','lb'].includes(unit))throw Error('머신 단위를 확인해 주세요.');
  const photoDataUrl=String(raw.photoDataUrl||'');if(photoDataUrl&&(photoDataUrl.length>2*1024*1024||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(photoDataUrl)))throw Error('머신 사진은 2 MB 이하의 PNG·JPEG·WebP로 선택해 주세요.');
- return {id:raw.id||uid(),name,photoDataUrl,exerciseId:String(raw.exerciseId||''),manufacturer:String(raw.manufacturer||'모름').trim(),model:String(raw.model||'모름').trim(),location:String(raw.location||'').trim(),resistance:String(raw.resistance||'모름').trim(),unit};
+ return {id:raw.id||uid(),name,aliases:cleanIds(raw.aliases).map(x=>x.trim()).filter(x=>x&&x!==name),photoDataUrl,exerciseId:String(raw.exerciseId||''),manufacturer:String(raw.manufacturer||'모름').trim(),model:String(raw.model||'모름').trim(),location:String(raw.location||'').trim(),resistance:String(raw.resistance||'모름').trim(),unit};
 }
 export function cleanCustomExercise(raw){
  const name=String(raw.name||'').trim();if(!name)throw Error('종목 이름을 입력해 주세요.');
