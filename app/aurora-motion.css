@@ -1,0 +1,7 @@
+:root{--spring:cubic-bezier(.25,1.4,.4,1)}
+@keyframes mwlSpringIn{0%{opacity:0;transform:translateY(21px) scale(.94)}70%{opacity:1;transform:translateY(-3px) scale(1.015)}100%{opacity:1;transform:none}}
+@keyframes mwlSpringOut{to{opacity:0;transform:translateY(15px) scale(.95)}}
+@keyframes mwlFadeIn{from{opacity:0}to{opacity:1}}
+.mwl-page-enter{animation:mwlSpringIn 390ms var(--spring) both;transform-origin:50% 12%}.mwl-modal-enter{animation:mwlFadeIn 240ms ease-out both}.mwl-modal-enter .sheet{animation:mwlSpringIn 390ms var(--spring) both;transform-origin:50% 100%}.mwl-modal-exit{animation:mwlFadeIn 180ms ease-in reverse both}.mwl-modal-exit .sheet{animation:mwlSpringOut 180ms ease-in both}.toast{animation:mwlSpringIn 390ms var(--spring) both}
+button,.chip,.timeline-card,.home-stat{transition:transform 260ms var(--spring),background-color 220ms ease,border-color 220ms ease,box-shadow 260ms ease}button:active{transform:scale(.96)}.home-quick button:active,.nav button[data-modal=quick]:active{transform:scale(.9)}@media(hover:hover) and (pointer:fine){.button:not(:disabled):hover,.home-quick button:hover{transform:translateY(-3px) scale(1.012);box-shadow:0 10px 22px #0004}.timeline-card:hover,.home-stat:hover{transform:translateY(-3px);border-color:#78a4bc}.nav button:hover{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
